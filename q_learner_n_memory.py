@@ -67,6 +67,6 @@ class Q_Learner_6505(axl.RiskyQLearner):
         """
         prob = "{:.1f}".format(opponent.cooperations)
         action_str_opp = actions_to_str(opponent.history[-self.memory_length :])
-        action_str_own = actions_to_str(opponent.history[-self.memory_length :])
+        action_str_own = actions_to_str(self.history[-self.memory_length :])
         return action_str_own + action_str_opp
     
