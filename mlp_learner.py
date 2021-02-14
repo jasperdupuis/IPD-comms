@@ -6,6 +6,7 @@ Created on Sat Feb 13 15:23:15 2021
 
 """
 
+
 import numpy as np
 import torch
 import axelrod as axl
@@ -13,6 +14,12 @@ from axelrod.action import Action
 from axelrod.player import Player
 
 from typing import Dict, Union
+
+
+OUTPUT_DIR = "./output/"
+TOURNAMENT_RESULTS_FILE = "tournament_results.png"
+TOURNAMENT_PAYOFFS_FILE = "tournament_payoffs.png"
+
 
 Score = Union[int,float]
 C, D = Action.C, Action.D
@@ -34,6 +41,7 @@ class MLP_Learner(Player):
     #storage for 10000 long games, don't go that long.
     opp_move = np.zeros(10000)
     own_move = np.zeros(10000)
+    rewards = np.zeros(10000)
     outputs = np.zeros(10000)
     
     nnet = 'not yet set' # default string in case it breaks
@@ -50,11 +58,11 @@ class MLP_Learner(Player):
         if action == C: return torch.tensor(1.)
         if action == D: return torch.tensor(0.)
         
-    def int_to_action(self,integer):
+    def int_to_action(self,integer): #not used right now
         if integer>0.9: return C
         if integer<0.9: return D
         
-    def state_to_one_hot(reward):
+    def state_to_one_hot(reward): #not used right now
         """
         Maps the IPD(n-1) rewaerd to a one-hot vector.
         """
@@ -138,6 +146,7 @@ class MLP_Learner(Player):
         #record for posterity:
         self.own_move[len(self.history)-1] = self.action_to_int(self.history[-1])
         self.opp_move[len(self.history)-1] = self.action_to_int(opponent.history[-1])
+        self.rewards[len(self.history)-1] = reward
         self.outputs[len(self.history)-1] = action_as_tensor
         
         
@@ -194,8 +203,43 @@ if __name__ == '__main__':
     alt = axl.Alternator()
     rnd = axl.Random() 
     
-    turns = 100
-    game = axl.Match([mlp,tft],turns=turns)
-    game.set_seed(5) #same every time for RNGs
-    for _ in range(turns):
-        game.play()
+    if(False):
+        #Check to see if this really beats tit for tat, no tournament: 
+        games = []
+        num_games = 20
+        turns = 200
+        for _ in range(num_games):
+            mlp = MLP_Learner(lr,num_in,num_hid)
+            tft = axl.TitForTat()
+            
+            game = axl.Match([mlp,tft],turns=turns)
+            game.set_seed(5) #same every time for RNGs
+            for _ in range(turns):
+                game.play()
+                games.append(game)
+    if(False):
+        #Check to see how this does in a tournament
+        TURNS_PER_MATCH = 200
+        REPETITIONS = 10
+        players = [MLP_Learner(lr,num_in,num_hid),
+                   axl.TitForTat(),
+                   axl.Alternator(),
+                   axl.Random()
+                   ]
+        tournament = axl.Tournament(
+                players=players,
+                turns=TURNS_PER_MATCH,
+                repetitions=REPETITIONS
+                )
+        results = tournament.play()
+        winners = results.ranked_names
+        
+        results_plot = axl.Plot(results)
+        plot = results_plot.boxplot()
+        plot.show()
+        plot.savefig(OUTPUT_DIR+TOURNAMENT_RESULTS_FILE)
+        
+        plot = results_plot.payoff()
+        plot.show()
+        plot.savefig(OUTPUT_DIR+TOURNAMENT_PAYOFFS_FILE)
+
