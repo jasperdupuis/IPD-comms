@@ -3,6 +3,8 @@
 import axelrod as axl
 from q_learner_n_memory import Q_Learner_6505
 from dqn_learner import DQN_Learner
+from dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,28 +42,20 @@ if __name__ == '__main__':
     q = Q_Learner_6505()
     q.set_params(learning_rate,discount_rate,action_selection_parameter,memory_length)
     
-    
-    #
-    memory_length = 3
-    n_outputs = 2
-    dqn = DQN_Learner(memory_length,n_outputs)
-    dqn.set_params()#default arguments are defined for function.
-    
-    
     tft = axl.TitForTat()
     alt = axl.Alternator()
     rnd = axl.Random() 
     
     if(False):#Play one matcha gainst a given opponent, chosen on next line.
-        opponent = axl.Alternator() #wins easily    
-        #opponent = axl.TitForTat()     # wins by a hair
+        #opponent = axl.Alternator() #wins easily    
+        opponent = axl.TitForTat()     # wins by a hair
         #opponent = axl.CautiousQLearner() # wins easily
         #opponent = axl.EvolvedANNNoise05() # Can do well early, but loses over 1000 turns.
-        dqn = DQN_Learner(memory_length,n_outputs)
-        dqn.set_params()#default arguments are defined for function.
+        dqn = DQN_Learner_Intergame_Memory() #just a shell awating commands
+        dqn.set_params() #defaults in constructor.
         dqn.init_net()
     
-        turns=1000
+        turns=10000
         repetitions = 1 # AKA num games
         game = axl.Match([dqn,opponent],turns=turns)
         #game.set_seed(5) #same every time for RNGs
@@ -70,6 +64,7 @@ if __name__ == '__main__':
             game.play()
         print('Done single game, generating result plot.')
         plot_game_result(game,dqn,opponent)
+        dqn.reset()
         
     if(False): # play a set of games versus tit for tat
         #Check to see if this really beats tit for tat, no tournament: 
@@ -90,16 +85,19 @@ if __name__ == '__main__':
 
     if(True):
         #Check to see how this does in a tournament
-        TURNS_PER_MATCH = 500
-        REPETITIONS = 10
-        dqn = DQN_Learner(memory_length,n_outputs)
+        TURNS_PER_MATCH = 1000
+        REPETITIONS = 5
         
-        players = [dqn,
-                   axl.WorseAndWorse(),
+        dqn = DQN_Learner_Intergame_Memory() #just a shell awating commands
+        dqn.set_params() #defaults in constructor.
+        dqn.init_net()
+        
+        players = [axl.WorseAndWorse(),
                    axl.Random(),
                    axl.TitForTat(),
                    axl.Alternator(),
                    axl.CautiousQLearner(),
+                   dqn,
                    axl.EvolvedANN(),
                    axl.EvolvedANNNoise05()
                   ]
