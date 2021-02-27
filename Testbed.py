@@ -1,6 +1,7 @@
 #Testing zone.
 
 import axelrod as axl
+from tournament_6505 import Tournament_6505
 from q_learner_n_memory import Q_Learner_6505
 from dqn_learner import DQN_Learner
 from dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
@@ -39,8 +40,8 @@ if __name__ == '__main__':
     discount_rate = 0.1
     action_selection_parameter = 0.1
     memory_length = 10
-    q = Q_Learner_6505()
-    q.set_params(learning_rate,discount_rate,action_selection_parameter,memory_length)
+    ql = Q_Learner_6505()
+    ql.set_params(learning_rate,discount_rate,action_selection_parameter,memory_length)
     
     tft = axl.TitForTat()
     alt = axl.Alternator()
@@ -93,19 +94,31 @@ if __name__ == '__main__':
         dqn.init_net()
         
         players = [axl.WorseAndWorse(),
+                   axl.Cooperator(),
+                   axl.Defector(),
+                   axl.Grudger(),
+                   axl.AdaptorBrief(),
+                   axl.AdaptorLong(),
                    axl.Random(),
                    axl.TitForTat(),
                    axl.Alternator(),
                    axl.CautiousQLearner(),
                    dqn,
+                   ql,
                    axl.EvolvedANN(),
                    axl.EvolvedANNNoise05()
                   ]
-        tournament = axl.Tournament(
+        tournament = Tournament_6505(
                 players=players,
                 turns=TURNS_PER_MATCH,
                 repetitions=REPETITIONS
                 )
+        
+        # tournament = axl.Tournament(
+        #         players=players,
+        #         turns=TURNS_PER_MATCH,
+        #         repetitions=REPETITIONS
+        #         )
         results = tournament.play()
         winners = results.ranked_names
         
