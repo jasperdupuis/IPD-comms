@@ -1,7 +1,6 @@
 #Testing zone.
 
 import axelrod as axl
-from tournament_6505 import Tournament_6505
 from q_learner_n_memory import Q_Learner_6505
 from dqn_learner import DQN_Learner
 from dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
@@ -108,7 +107,7 @@ if __name__ == '__main__':
                    axl.EvolvedANN(),
                    axl.EvolvedANNNoise05()
                   ]
-        tournament = Tournament_6505(
+        tournament = axl.Tournament(
                 players=players,
                 turns=TURNS_PER_MATCH,
                 repetitions=REPETITIONS
