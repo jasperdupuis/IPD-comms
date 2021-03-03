@@ -3,7 +3,7 @@ from axelrod.player import Player
 
 
 #Meant to return action from axelrod, but using to return trust
-class Trust_Box(axl.RiskyQLearner):
+class Trust_Box(axl.Player):
 
     def __init__(self):
         super.__init__(self)

@@ -2,7 +2,7 @@
 
 import axelrod as axl
 from q_learner_n_memory import Q_Learner_6505
-from dqn_learner import DQN_Learner
+from tournament_6505 import Tournament_6505
 from dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
 
 
@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np  
 
 OUTPUT_DIR = "./output/"
+MATCH_RESULTS = "./output/match_against_dqn/"
 TOURNAMENT_RESULTS_FILE = "tournament_results.png"
 TOURNAMENT_PAYOFFS_FILE = "tournament_payoffs.png"
 
@@ -26,11 +27,18 @@ def plot_game_result(game,mani_jasper,opponent):
     index = 0
     for qq,aa in result:
         q_rewards[index] = qq
-        opp_rewards[index] =  aa
+        opp_rewards[index] = aa
         q_score[index] = sum(q_rewards)
         opp_score[index] = sum(opp_rewards)
         index = index + 1
-    plt.plot(q_score,label=mani_jasper.name);plt.plot(opp_score,label=opponent.name);plt.legend()
+
+    plt.plot(q_score,label=(mani_jasper.name, ' D ' , game.players[0].defections , ' C ', game.players[0].cooperations));
+    plt.plot(opp_score,label=(opponent.name , ' D ' , game.players[1].defections , 'C ', game.players[1].cooperations));
+    plt.legend()
+    plt.savefig(MATCH_RESULTS + "DQN and " + opponent.name + ".png")
+    plt.show()
+    plt.clf()
+
     
 
 #Testing area
@@ -46,25 +54,28 @@ if __name__ == '__main__':
     alt = axl.Alternator()
     rnd = axl.Random() 
     
-    if(False):#Play one matcha gainst a given opponent, chosen on next line.
+    if(True):#Play one matcha gainst a given opponent, chosen on next line.
         #opponent = axl.Alternator() #wins easily    
-        opponent = axl.TitForTat()     # wins by a hair
+        #opponent = axl.TitForTat()     # wins by a hair
         #opponent = axl.CautiousQLearner() # wins easily
         #opponent = axl.EvolvedANNNoise05() # Can do well early, but loses over 1000 turns.
+        opp_players = [axl.TitForTat(),axl.Cooperator(),axl.EvolvedANNNoise05(),axl.Defector(),axl.Random()]
         dqn = DQN_Learner_Intergame_Memory() #just a shell awating commands
         dqn.set_params() #defaults in constructor.
         dqn.init_net()
     
-        turns=10000
+        turns=1000
         repetitions = 1 # AKA num games
-        game = axl.Match([dqn,opponent],turns=turns)
-        #game.set_seed(5) #same every time for RNGs
-        #game.set_seed()
-        for _ in range(repetitions):
-            game.play()
-        print('Done single game, generating result plot.')
-        plot_game_result(game,dqn,opponent)
-        dqn.reset()
+
+        for opp_player in opp_players:
+            game = axl.Match([dqn,opp_player],turns=turns)
+            #game.set_seed(5) #same every time for RNGs
+            #game.set_seed()
+            for _ in range(repetitions):
+                game.play()
+            print('Done single game, generating result plot between DQN and ' , opp_player.name )
+            plot_game_result(game,dqn,opp_player)
+
         
     if(False): # play a set of games versus tit for tat
         #Check to see if this really beats tit for tat, no tournament: 
@@ -83,7 +94,7 @@ if __name__ == '__main__':
                 game.play()
                 games.append(game)
 
-    if(True):
+    if(False):
         #Check to see how this does in a tournament
         TURNS_PER_MATCH = 1000
         REPETITIONS = 5
@@ -107,7 +118,7 @@ if __name__ == '__main__':
                    axl.EvolvedANN(),
                    axl.EvolvedANNNoise05()
                   ]
-        tournament = axl.Tournament(
+        tournament = Tournament_6505(
                 players=players,
                 turns=TURNS_PER_MATCH,
                 repetitions=REPETITIONS
@@ -129,3 +140,5 @@ if __name__ == '__main__':
         plot = results_plot.payoff()
         plot.show()
         plot.savefig(OUTPUT_DIR+TOURNAMENT_PAYOFFS_FILE)
+
+
