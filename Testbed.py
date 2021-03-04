@@ -8,7 +8,9 @@ from dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
 
 import numpy as np
 import matplotlib.pyplot as plt
-import numpy as np  
+import numpy as np
+
+import csv
 
 OUTPUT_DIR = "./output/"
 MATCH_RESULTS = "./output/match_against_dqn/"
@@ -54,7 +56,7 @@ if __name__ == '__main__':
     alt = axl.Alternator()
     rnd = axl.Random() 
     
-    if(True):#Play one matcha gainst a given opponent, chosen on next line.
+    if(False):#Play one matcha gainst a given opponent, chosen on next line.
         #opponent = axl.Alternator() #wins easily    
         #opponent = axl.TitForTat()     # wins by a hair
         #opponent = axl.CautiousQLearner() # wins easily
@@ -67,6 +69,9 @@ if __name__ == '__main__':
         turns=1000
         repetitions = 1 # AKA num games
 
+        csvfile = open(MATCH_RESULTS + 'matchresults.csv', 'a',newline='')
+        writer = csv.writer(csvfile, delimiter=",")
+
         for opp_player in opp_players:
             game = axl.Match([dqn,opp_player],turns=turns)
             #game.set_seed(5) #same every time for RNGs
@@ -74,7 +79,12 @@ if __name__ == '__main__':
             for _ in range(repetitions):
                 game.play()
             print('Done single game, generating result plot between DQN and ' , opp_player.name )
+            writer.writerow([str("DQN and" + opp_player.name)])
+            writer.writerow(dqn.history)
+            writer.writerow(opp_player.history)
             plot_game_result(game,dqn,opp_player)
+
+        csvfile.close()
 
         
     if(False): # play a set of games versus tit for tat
@@ -94,7 +104,7 @@ if __name__ == '__main__':
                 game.play()
                 games.append(game)
 
-    if(False):
+    if(True):
         #Check to see how this does in a tournament
         TURNS_PER_MATCH = 1000
         REPETITIONS = 5

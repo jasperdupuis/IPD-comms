@@ -120,7 +120,7 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         return new_player
 
     def set_params(self,                   
-                  memory_turns=4,
+                  memory_turns=3,
                   n_output=2,
                   learning = 0.9,
                   discount = 0.9,
