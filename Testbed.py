@@ -56,17 +56,17 @@ if __name__ == '__main__':
     alt = axl.Alternator()
     rnd = axl.Random() 
     
-    if(False):#Play one matcha gainst a given opponent, chosen on next line.
+    if(True):#Play one matcha gainst a given opponent, chosen on next line.
         #opponent = axl.Alternator() #wins easily    
         #opponent = axl.TitForTat()     # wins by a hair
         #opponent = axl.CautiousQLearner() # wins easily
         #opponent = axl.EvolvedANNNoise05() # Can do well early, but loses over 1000 turns.
-        opp_players = [axl.TitForTat(),axl.Cooperator(),axl.EvolvedANNNoise05(),axl.Defector(),axl.Random()]
+        opp_players = [axl.Defector(),axl.TitForTat(),axl.Cooperator(),axl.EvolvedANNNoise05(),axl.Random(),axl.Alternator()]
         dqn = DQN_Learner_Intergame_Memory() #just a shell awating commands
         dqn.set_params() #defaults in constructor.
         dqn.init_net()
     
-        turns=1000
+        turns=7999
         repetitions = 1 # AKA num games
 
         csvfile = open(MATCH_RESULTS + 'matchresults.csv', 'a',newline='')
@@ -83,7 +83,9 @@ if __name__ == '__main__':
             writer.writerow(dqn.history)
             writer.writerow(opp_player.history)
             plot_game_result(game,dqn,opp_player)
-
+            dqn.reset()
+            dqn.set_params()  # defaults in constructor.
+            dqn.init_net()
         csvfile.close()
 
         
@@ -104,7 +106,7 @@ if __name__ == '__main__':
                 game.play()
                 games.append(game)
 
-    if(True):
+    if(False):
         #Check to see how this does in a tournament
         TURNS_PER_MATCH = 1000
         REPETITIONS = 5

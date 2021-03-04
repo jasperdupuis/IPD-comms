@@ -235,6 +235,22 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         torch.cat(self.memory_as_list,out=b)
         return b #one hot format now.
 
+    def find_reward(self, opponent: Player) -> Dict[Action, Dict[Action, Score]]:
+        """
+        Finds the reward gained on the last iteration
+        """
+        total_reward = 0
+
+        if len(opponent.history) <=  self.memory_length:
+            opp_prev_action = self._random.random_choice()
+            total_reward = self.payoff_matrix[self.prev_action][opp_prev_action]
+        else:
+            for i in range(self.memory_length):
+                opp_prev_action = opponent.history[-(i+1)]
+                self_pre_action = self.history[-(i+1)]
+                total_reward += self.payoff_matrix[self_pre_action][opp_prev_action]
+        return total_reward
+
     def strategy(self,opponent: Player) -> Action:
         """
         The hook in to the Axelrod tournament.
