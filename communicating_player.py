@@ -2,19 +2,26 @@
 A class that enables communication between opponents.
 """
 
-#Axelrod imports
-import axelrod as axl
-from axelrod.action import Action, actions_to_str
-from axelrod.player import Player
-from typing import Dict, Union
-
+#Python imports
 import numpy as np
 import torch
 from torch import nn
 from copy import deepcopy, copy
 
+# M&J module imports
+import trust_box
+import conviction_box
 
-Class Communicating_Player(axl.Player):
+#Axelrod imports
+import axelrod as axl
+from axelrod.action import Action, actions_to_str
+from axelrod.player import Player
+from axelrod.random_ import RandomGenerator
+from typing import Dict, Union
+
+C, D = Action.C, Action.D
+
+class Communicating_Player(axl.Player):
     """
     This class enables communication between two players,
     and also containerizes up to three RL agents, with names in brackets:
@@ -23,6 +30,7 @@ Class Communicating_Player(axl.Player):
         3) Comparison of results from (1) and (2) ("conviction")
     """
     
+    name = "Communicating Player"
     generator = 'not yet set'
     
     base = 'not yet set'
@@ -47,13 +55,54 @@ Class Communicating_Player(axl.Player):
     TRUTH_MEAN = torch.tensor([0.8])
     TRUTH_STD = torch.tensor([0.1])
     
-    def __init__(self,seed)->None:
+    def __init__(self,seed=101)->None:
         """
-        Doesn't do anything other than call the base and set a generator to a passed seed.
+        Call the base and set a generator to a passed seed.
+        
+        Also, set naive implementations of Trust and Conviction:
+            Always trust the opponent's intent
+            Always act on base judgement.
+            (net effect is that by default, this acts like base agent)
         """
         Player.__init__(self)
+        self.classifier["stochastic"] = True #Make the communicator such by default, to pass to submodules.
         self.generator = torch.Generator()
         self.generator.manual_seed(seed)
+        self.trust = trust_box.Ned_Stark()
+        self.conviction = conviction_box.Michael_Scott()
+        
+    def reset(self):
+        self.base.reset()
+        self.trust.reset()
+        self.conviction.reset()
+
+    def set_seed(self,seed):
+        """
+        Strict copy pasta of the base class method, but pass it to the three sub modules too.
+        """
+        if seed is None:
+            warnings.warn(
+                "Initializing player with seed from Axelrod module random number generator. "
+                "Results may not be seed reproducible.")
+            self._seed = _module_random.random_seed_int()
+        else:
+            self._seed = seed
+        self._random = RandomGenerator(seed=self._seed)
+        self.base._random = self._random
+        self.trust._random = self._random
+        self.conviction._random = self._random
+
+    def update_history(self, play, coplay):
+        """
+        Strict copy-pasta of the base class method,
+        but pass it to the three submodules too.
+        """
+        self.history.append(play, coplay)
+        self.base.history.append(play,coplay)
+        self.trust.history.append(play,coplay)
+        self.conviction.history.append(play,coplay)
+
+
 
     def set_base_agent(self,agent):
         self.base=deepcopy(agent)
@@ -72,7 +121,7 @@ Class Communicating_Player(axl.Player):
         rand = 0
         if self.action_base == C:
             rand = torch.normal(mean=self.TRUTH_MEAN,std=self.TRUTH_STD,generator = self.generator)
-        else #self.action_base == D:
+        else: #self.action_base == D:
             rand = torch.normal(mean=self.DECEIVE_MEAN,std=self.DECEIVE_STD,generator = self.generator)
         if rand < 0.1: intent[0] = 1
         elif rand < 0.2: intent[1] = 1
@@ -93,21 +142,23 @@ Class Communicating_Player(axl.Player):
         """
         self.action_base = self.base.strategy(opponent)
         self.intent_sent_prev = self.intent_sent
-        self.intent_sent = self.generate_message(self.action_base)
-        return self.message_own
+        self.intent_sent = self.generate_message()
+        return self.intent_sent
     
     def assess_received_intent(self,prev_nme_action):
-        self.trust.strategy(self.intent_received,
+        assessment = self.trust.strategy(self.intent_received,
                             self.intent_received_prev,
                             self.assessment_prev,
                             prev_nme_action)
-        return C
+        return assessment #what we think the opponent is going to do based on message.
     
-    def decide_based_on_new_intel(self,assessment):
-        self.conviction.strategy(self.action_base,
+    def decide_based_on_new_intel(self,
+                                  assessment,
+                                  prev_nme_action):
+        action = self.conviction.strategy(self.action_base,
                                  assessment,
                                  prev_nme_action)
-        return C
+        return action
     
     def strategy(self,
                  opponent:Player,
@@ -116,6 +167,7 @@ Class Communicating_Player(axl.Player):
         given message and best action determined from self.generate_base_intent_and_message,
         determine best action based on Trust and Conviction.
         """
+        if len(self.history) == 0: return self.action_base
         # assess perceived intent message in opponent.sent_message
         self.intent_received_prev = self.intent_received
         self.intent_received = opponent.intent_sent
@@ -125,7 +177,7 @@ Class Communicating_Player(axl.Player):
         # receive assessment and decide to stay with self.base_Action
         # OR change it to the other action.        
         self.old_decision = self.decision
-        self.decision = self.decide_based_on_new_intel(assessment,
+        self.decision = self.decide_based_on_new_intel(self.assessment,
                                                        opponent.history[-1])
         return self.decision
     
