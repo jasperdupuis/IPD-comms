@@ -36,7 +36,7 @@ class Match_6505(axl.Match):
     def simultaneous_play(self, player, coplayer, noise=0):
         """This pits two players against each other."""
         player.generate_base_intent_and_message(coplayer)
-        coplayer.generate_base_intent_and_message(coplayer)
+        coplayer.generate_base_intent_and_message(player)
         
         s1, s2 = player.strategy(coplayer), coplayer.strategy(player)
         if noise:
