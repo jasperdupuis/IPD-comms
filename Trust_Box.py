@@ -39,7 +39,9 @@ class Ned_Stark(Trust_Box):
     (We can replace this with Cooperator)
     """
     name = 'Trusting'
-    def strategy():
+    def strategy(intent_received,
+                assessment_prev,
+                prev_nme_action):
         return C
 
 class Tywin_Lannister(Trust_Box):
@@ -50,7 +52,9 @@ class Tywin_Lannister(Trust_Box):
     
     name = 'Paranoid'
     
-    def strategy():
+    def strategy(intent_received,
+                assessment_prev,
+                prev_nme_action):
         return D
 
 class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
