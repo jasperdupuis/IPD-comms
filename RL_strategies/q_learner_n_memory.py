@@ -26,10 +26,6 @@ TOURNAMENT_PAYOFFS_FILE = "tournament_payoffs.png"
 Score = Union[int,float]
 C, D = Action.C, Action.D
 
-def init_weights(m):
-        if type(m) == torch.nn.Linear:
-            torch.nn.init.normal_(m.weight, std=0.01)
-            
 class Q_Learner_6505(axl.RiskyQLearner):
     """
     This extends the axl.RiskyQLearner class.
