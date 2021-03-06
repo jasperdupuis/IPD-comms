@@ -25,7 +25,7 @@ TOURNAMENT_PAYOFFS_FILE = "tournament_payoffs.png"
 
 Score = Union[int,float]
 C, D = Action.C, Action.D
-
+            
 class Q_Learner_6505(axl.RiskyQLearner):
     """
     This extends the axl.RiskyQLearner class.
@@ -41,11 +41,11 @@ class Q_Learner_6505(axl.RiskyQLearner):
     also included in the state (and prevented revisiting states)
     """
     
-    name = "Mani and Jasper's Q learner"
+    name = "M&J's Q learner"
     
     #Default values, change with set_params
     learning_rate = 0.9 #learns fast
-    discount_rate = 0.1 # cares about the future
+    discount_rate = 0.9 # cares about the future
     action_selection_parameter = 0.1 #bias towards exploration to visit new states
     memory_length = 3 # number of turns recalled in state
         

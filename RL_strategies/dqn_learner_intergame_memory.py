@@ -18,6 +18,7 @@ import torch
 from torch import nn
 import csv
 from copy import deepcopy, copy
+import datetime
 
 
 OUTPUT_DIR = "./output/"
@@ -49,11 +50,13 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
     one hidden layer.
     """
     
-    name = "Mani and Jasper's DQN learner"
-    update_period = 25 #how many turns to play before training
+    name = "M&J DQN learner w/ memory"
+    
+    #DEBUG AND TESTING TOOLS
+    list_of_nets = []
     r_expect = ['Expected']
     r_actual = ['Actual']
-        
+    
 
     
     #Structures needed for learning + target generation
@@ -70,16 +73,25 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
     #Default values, change with set_params
     learning_rate = 0.9 #learns fast
     discount_rate = 0.9 # cares about the future
-    action_selection_parameter = 0.1 #bias towards exploration to visit new states
     memory_length = 3 # number of turns recalled in state
     units_per_hidden = 16    
-    target_sync_freq = 10
+    target_sync_freq = 5
     
+    update_period = 25 #how many turns to play before training
     sync_counter = 0
     n_input_features = 4 # state as vector of 1s and 0s, or C and D, represents 1 turn.
     n_outputs = 2 #action as one hot
 
 
+    def write_q_and_rewards(self):
+        with open(r'output\csvs\rewards.csv', 'a',newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=",")
+            writer.writerow(self.r_expect)
+            writer.writerow(self.r_actual)
+            
+        self.r_expect = ['Expected']
+        self.r_actual = ['Actual']
+        
     def reset(self):
         """
         write game reward results to file
@@ -88,14 +100,8 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         if len(self.r_actual) < 10:
             super().__init__(**self.init_kwargs)
             return
-            
-        with open(r'output\csvs\rewards.csv', 'a',newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter=",")
-            writer.writerow(self.r_expect)
-            writer.writerow(self.r_actual)
-            
-        self.r_expect = ['Expected']
-        self.r_actual = ['Actual']
+        
+        self.write_q_and_rewards()
         
         super().__init__(**self.init_kwargs)
 
@@ -122,18 +128,16 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
     def set_params(self,                   
                   memory_turns=3,
                   n_output=2,
-                  learning = 0.9,
-                  discount = 0.9,
-                  select_param = 0.1,
-                  units_per_hidden = 16,
-                  epsilon=0.1,
-                  target_sync_freq = 25):
+                  learning = 0.1,
+                  discount = 0.1,
+                  units_per_hidden = 128,
+                  epsilon=0.2,
+                  target_sync_freq = 10):
         """
         Hyperparameter setter, decent defaults provided.
         """
         self.learning_rate = learning
         self.discount_rate = discount
-        self.action_selection_parameter = select_param
         self.units_per_hidden = units_per_hidden
         self.epsilon = epsilon
         self.target_sync_freq = target_sync_freq
@@ -142,7 +146,7 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         self.memory_length = memory_turns
         self.n_input_features = 4*memory_turns
         self.n_outputs = n_output
-            
+        
     def __init__(self)->None:
         """
         Calls set_params and init_net to ease interaction with the tournament.
@@ -158,15 +162,18 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         self.q_network = nn.Sequential(
         nn.Linear(self.n_input_features,  self.units_per_hidden, bias=True),
         nn.ReLU(),
-        nn.Linear( self.units_per_hidden,  self.units_per_hidden, bias=True),
-        nn.ReLU(), 
+        #nn.Linear( self.units_per_hidden,  self.units_per_hidden, bias=True),
+        #nn.ReLU(), 
         nn.Linear( self.units_per_hidden,  self.units_per_hidden, bias=True),
         nn.ReLU(),
         nn.Linear( self.units_per_hidden, self.n_outputs, bias=True))
     
+        
+        self.list_of_nets.append(deepcopy(self.q_network))   
+    
         self.target_network = deepcopy(self.q_network)
     
-        self.optimizer = torch.optim.Adam(self.q_network.parameters(),
+        self.optimizer = torch.optim.SGD(self.q_network.parameters(),
                                           lr=self.learning_rate)
         self.loss = torch.nn.MSELoss()     
 
@@ -200,17 +207,21 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         highest quality of the actions that are available.
         """
         if(self.sync_counter == self.target_sync_freq):
+            self.list_of_nets.append(deepcopy(self.q_network))
             self.target_network.load_state_dict(self.q_network.state_dict())
             self.sync_counter = 0
         
-        # predict expected return of current state using main network
+        # based on LAST STATE, make a prediction called qp.
+        # This is the predicted quality of the action for which we just received the reward (n-1 v n)
         qp = self.q_network(s)
         pred_return, _ = torch.max(qp, axis=0)
         
-        # get target return using target network
+        # Using the target network, guess what the value of the NEXT action is (n v n+1).
+        # Use this and the discount factor to generate a TARGET of this turn.
         q_next = self.get_q_next(sn)
         target_return = rn + self.discount_rate * q_next
         
+        #Run MSE loss here.
         loss = self.loss(pred_return, target_return)
         self.optimizer.zero_grad()
         loss.backward(retain_graph=True)
@@ -234,22 +245,6 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         self.memory_as_list.append(state)# add as new entry
         torch.cat(self.memory_as_list,out=b)
         return b #one hot format now.
-
-    def find_reward(self, opponent: Player) -> Dict[Action, Dict[Action, Score]]:
-        """
-        Finds the reward gained on the last iteration
-        """
-        total_reward = 0
-
-        if len(opponent.history) <=  self.memory_length:
-            opp_prev_action = self._random.random_choice()
-            total_reward = self.payoff_matrix[self.prev_action][opp_prev_action]
-        else:
-            for i in range(self.memory_length):
-                opp_prev_action = opponent.history[-(i+1)]
-                self_pre_action = self.history[-(i+1)]
-                total_reward += self.payoff_matrix[self_pre_action][opp_prev_action]
-        return total_reward
 
     def strategy(self,opponent: Player) -> Action:
         """
