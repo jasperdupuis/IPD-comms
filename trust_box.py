@@ -1,10 +1,15 @@
 import numpy as np
 import torch
 
+#Imports to support axl implementations and carry overs.
 import axelrod as axl
+from axelrod.action import Action, actions_to_str
 from axelrod.player import Player
-from axelrod.action import Action
+from collections import OrderedDict
+from typing import Dict, Union
+Score = Union[int, float]
 C, D = Action.C, Action.D
+
 
 import RL_strategies.dqn_learner_intergame_memory
 from RL_strategies.dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
@@ -70,7 +75,8 @@ class Tywin_Lannister(Trust_Box):
 
 class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
     """
-    Re implement the Q Learner to use the variable length intent vector
+    Re implement the Q Learner to use the variable intent vector
+    (Had to change state and inputs)
     """
     name = "Trust Q learner"
     
@@ -115,6 +121,10 @@ class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
         Runs a qlearn algorithm while the tournament is running.
         Reimplement the base class strategy to work with trust communication
         """
+        if len(self.history) == 0:
+            self.prev_action = self._random.random_choice()
+            self.original_prev_action = self.prev_action
+        
         state = self.find_state(intent_received)
         reward = self.find_reward(assessment_prev,
                                   prev_nme_action)
