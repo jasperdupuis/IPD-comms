@@ -3,6 +3,8 @@ import torch
 
 import axelrod as axl
 from axelrod.player import Player
+from axelrod.action import Action
+C, D = Action.C, Action.D
 
 import RL_strategies.dqn_learner_intergame_memory
 from RL_strategies.dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
@@ -19,19 +21,17 @@ class Trust_Box(axl.Player):
     
     """
     
-    def __init__(self):
-        super.__init__(self)
-
 
     def strategy(self, opponent: Player,opponent_intent):
         #return trust
         return C
 
-    def strategy(intent_received,
+    def strategy(self,
+                intent_received,
+                intent_received_prev,
                 assessment_prev,
                 prev_nme_action):
         return C
-    
     
 class Ned_Stark(Trust_Box):
     """
@@ -39,7 +39,13 @@ class Ned_Stark(Trust_Box):
     (We can replace this with Cooperator)
     """
     name = 'Trusting'
-    def strategy(intent_received,
+    
+    def strategy(self):
+        return C
+    
+    def strategy(self,
+                intent_received,
+                intent_received_prev,
                 assessment_prev,
                 prev_nme_action):
         return C
@@ -52,7 +58,12 @@ class Tywin_Lannister(Trust_Box):
     
     name = 'Paranoid'
     
-    def strategy(intent_received,
+    def strategy(self):
+        return D
+    
+    def strategy(self,
+                intent_received,
+                intent_received_prev,
                 assessment_prev,
                 prev_nme_action):
         return D
@@ -90,12 +101,14 @@ class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
     
     def find_reward(self,
                         assessment_prev,
-                        prev_nme_action)
+                        prev_nme_action):
         if assessment_prev == prev_nme_action: return 5
         else: return 0
         
     
-    def strategy(intent_received,
+    def strategy(self,
+                intent_received,
+                intent_received_prev,
                 assessment_prev,
                 prev_nme_action):
         """

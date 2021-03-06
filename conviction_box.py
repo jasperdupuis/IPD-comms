@@ -4,9 +4,6 @@ from axelrod.player import Player
 
 class Conviction_Box(axl.Player):
 
-    def __init__(self):
-        super.__init__(self)
-
 
     def strategy(self, opponent: Player,trust):
         #return action
@@ -14,9 +11,8 @@ class Conviction_Box(axl.Player):
     
 class Michael_Scott(Conviction_Box):
     """
-    "You miss all the shots you don't take" - Wayne Gretzky
-    
-    
+    "You miss all the shots you don't take" 
+        - Wayne Gretzky    
             -Michael Scott
     
     Always sticks with their gut, i.e. what was decided previously
@@ -53,3 +49,30 @@ class Vizzini(Conviction_Box):
                  assessment,
                  prev_nme_action):
         return D
+    
+    
+class Trust_Q_Learner(Conviction_Box,axl.RiskyQLearner):
+    """
+    Re implement the Q Learner to use the variable length intent vector
+    
+    ##TODO: ALL OF THIS!
+    """
+    name = "Conviction Q learner"
+    
+    #Default values, change with set_params
+    learning_rate = 0.5 #learns fast
+    discount_rate = 0.5 # cares about the future
+    action_selection_parameter = 0.1 #bias towards exploration to visit new states
+    memory_length = 1 # number of turns recalled in state
+        
+    def set_params(self,
+                   learning,
+                   discount,
+                   select_param,
+                   memory_length=1):
+        self.learning_rate = learning
+        self.discount_rate = discount
+        self.action_selection_parameter = select_param
+        self.memory_length = memory_length
+    
+    
