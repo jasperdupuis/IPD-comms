@@ -26,6 +26,8 @@ class Trust_Box(axl.Player):
     
     """
     
+    list_reward = []
+    
 
     def strategy(self, opponent: Player,opponent_intent):
         #return trust
@@ -37,6 +39,9 @@ class Trust_Box(axl.Player):
                 assessment_prev,
                 prev_nme_action):
         return C
+    
+    def append_reward(self,reward):
+        self.list_reward.append(reward)
     
 class Ned_Stark(Trust_Box):
     """
@@ -86,6 +91,22 @@ class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
     action_selection_parameter = 0.1 #bias towards exploration to visit new states
     memory_length = 1 # number of turns recalled in state
         
+    def __init__(self) -> None:
+        """Initialises the player by picking a random strategy."""
+
+        super().__init__()
+
+        # Set this explicitly, since the constructor of super will not pick it up
+        # for any subclasses that do not override methods using random calls.
+        self.classifier["stochastic"] = True
+
+        self.prev_action = C # type: Action
+        self.original_prev_action = C# type: Action
+        self.score = 0
+        self.Qs = OrderedDict({"": OrderedDict(zip([C, D], [0, 0]))})
+        self.Vs = OrderedDict({"": 0})
+        self.prev_state = ""
+    
     def set_params(self,
                    learning,
                    discount,
@@ -95,9 +116,9 @@ class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
         self.discount_rate = discount
         self.action_selection_parameter = select_param
         self.memory_length = memory_length
-    
-    
-    
+        
+        
+        
     def find_state(self, intent_received)-> str:
         """
         translate the received intent to a hashable state
@@ -122,8 +143,8 @@ class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
         Reimplement the base class strategy to work with trust communication
         """
         if len(self.history) == 0:
-            self.prev_action = self._random.random_choice()
-            self.original_prev_action = self.prev_action
+            self.prev_action = C
+            self.original_prev_action = C
         
         state = self.find_state(intent_received)
         reward = self.find_reward(assessment_prev,
@@ -138,6 +159,7 @@ class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
             action = self.select_action(state)
         self.prev_state = state
         self.prev_action = action
+        self.append_reward(reward)
         return action
     
 #class Trust_DQN(Trust_Box):

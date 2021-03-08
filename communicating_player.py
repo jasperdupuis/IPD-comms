@@ -57,9 +57,9 @@ class Communicating_Player(axl.Player):
     decision_prev = C
     
     DECEIVE_MEAN = torch.tensor([.4])
-    DECEIVE_STD = torch.tensor([.1])
+    DECEIVE_STD = torch.tensor([.2])
     TRUTH_MEAN = torch.tensor([0.8])
-    TRUTH_STD = torch.tensor([0.1])
+    TRUTH_STD = torch.tensor([0.2])
     
     def __init__(self,seed=101)->None:
         """
@@ -108,6 +108,7 @@ class Communicating_Player(axl.Player):
         """
         Strict copy-pasta of the base class method,
         but pass it to the three submodules too.
+        This passes the OVERALL actions, not the sub-actions.
         """
         self.history.append(play, coplay)
         self.base.history.append(play,coplay)
@@ -191,7 +192,7 @@ class Communicating_Player(axl.Player):
         self.list_intent_sent.append(self.intent_sent_prev)
         self.list_intent_assessment.append(self.assessment_prev)
         self.list_intent_true.append(opponent.history[-1])
-
+        
         # receive assessment and decide to stay with self.base_Action
         # OR change it to the other action.        
         self.old_decision = self.decision

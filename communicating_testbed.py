@@ -1,7 +1,11 @@
-#Testing zone.
+# Testing zone.
 
+#Axelrod imports
 import axelrod as axl
 from tournament_6505 import Tournament_6505,Tournament_Communicating_6505
+from axelrod.action import Action
+C, D = Action.C, Action.D
+
 
 # M&J's RL strategies
 from RL_strategies.q_learner_n_memory import Q_Learner_6505
@@ -12,7 +16,6 @@ from RL_strategies.dqn_learner_intergame_memory import DQN_Learner_Intergame_Mem
 from communicating_match import Match_6505
 from communicating_player import Communicating_Player
 from trust_box import Trust_Q_Learner
-
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,43 +30,11 @@ def plot_game_result(game,mani_jasper,opponent):
     """
     Does not save the figure generated, could be added if we want that.
     """
-    result = game.scores()
-    q_rewards = np.zeros(len(result))
-    q_score = np.zeros(len(result))
-    opp_rewards = np.zeros(len(result))
-    opp_score = np.zeros(len(result))
-    index = 0
-    for qq,aa in result:
-        q_rewards[index] = qq
-        opp_rewards[index] =  aa
-        q_score[index] = sum(q_rewards)
-        opp_score[index] = sum(opp_rewards)
-        index = index + 1
+    result = np.asarray(game.scores())
+    q_score= np.cumsum(result[:,0])
+    opp_score= np.cumsum(result[:,1])
     plt.plot(q_score,label=mani_jasper.name);plt.plot(opp_score,label=opponent.name);plt.legend()
 
-"""
-intent_rx = MJ_Communicator.list_intent_received #what was received on turn n-1 (one hot vector)
-intent_tx = MJ_Communicator.list_intent_sent #what was sent on turn n-1 (one hot vector)
-intent_assess = MJ_Communicator.list_intent_assessment #what was assessed value of intent on turn n-1 (C or D)
-intent_true = MJ_Communicator.list_intent_true  #what hte opponent did on turn n-1 (C or D)
-
-result = []
-for index in range(10):
-    specific_message= torch.zeros(10)
-    specific_message[index] = 1
-    num_C_true = 0
-    num_D_true = 0
-    num_C_assess = 0
-    num_D_assess = 0
-    
-    for rx,assess,true in zip(intent_rx,intent_assess,intent_true):
-        if torch.all(torch.eq(rx,specific_message)): #checks if all values are equal
-            if true == C: num_C_true += 1
-            if true == D: num_D_true += 1
-            if assess == C: num_C_assess += 1
-            if assess == D: num_D_assess += 1
-    result.append(np.array([num_C_true,num_C_assess,num_D_true,num_D_assess]))
-"""      
 
 #Testing area
 if __name__ == '__main__':
@@ -101,7 +72,7 @@ if __name__ == '__main__':
         opponent.set_base_agent(base)
         opponent.name='M&J Communicator Alternator'
     
-        turns=50
+        turns=10000
         repetitions = 1 # AKA num games
         game = Match_6505([MJ_Communicator,opponent],turns=turns)
         #game.set_seed(5) #same every time for RNGs
