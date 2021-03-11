@@ -19,7 +19,9 @@ from axelrod.player import Player
 from axelrod.random_ import RandomGenerator
 from typing import Dict, Union
 
+
 C, D = Action.C, Action.D
+Score = Union[int,float]
 
 class Communicating_Player(axl.Player):
     """
@@ -32,12 +34,6 @@ class Communicating_Player(axl.Player):
     
     name = "Communicating Player"
     generator = 'not yet set'
-    
-    #DEBUG / ANALYSIS TOOLS
-    list_intent_sent = []
-    list_intent_received = []
-    list_intent_assessment = []
-    list_intent_true = []
     
     base = 'not yet set'
     trust = 0. 
@@ -78,10 +74,18 @@ class Communicating_Player(axl.Player):
         self.conviction = conviction_box.Michael_Scott()
         
          #DEBUG / ANALYSIS TOOLS
+        self.list_base_action = []
         self.list_intent_sent = []
         self.list_intent_received = []
         self.list_intent_assessment = []
         self.list_intent_true = []
+        self.list_reward = []
+        self.list_decision = []
+        
+        
+    def receive_match_attributes(self):
+        (R, P, S, T) = self.match_attributes["game"].RPST()
+        self.payoff_matrix = {C: {C: R, D: S}, D: {C: T, D: P}}
         
     def reset(self):
         self.base.reset()
@@ -152,6 +156,7 @@ class Communicating_Player(axl.Player):
         a message one-hot-vector based on that intent.
         """
         self.action_base = self.base.strategy(opponent)
+        self.list_base_action.append(self.action_base)
         self.intent_sent_prev = self.intent_sent
         self.intent_sent = self.generate_message()
         return self.intent_sent
@@ -164,12 +169,20 @@ class Communicating_Player(axl.Player):
         return assessment #what we think the opponent is going to do based on message.
     
     def decide_based_on_new_intel(self,
-                                  assessment,
                                   prev_nme_action):
         action = self.conviction.strategy(self.action_base,
-                                 assessment,
-                                 prev_nme_action)
+                                 self.assessment,
+                                 self.reward,
+                                 prev_nme_action)                
         return action
+    
+    def find_reward(
+            self, opponent: Player
+            ) -> Dict[Action, Dict[Action, Score]]:
+        """
+        Finds the reward gained on the last iteration
+        """
+        return self.payoff_matrix[self.decision][opponent.history[-1]]
     
     def strategy(self,
                  opponent:Player,
@@ -180,14 +193,18 @@ class Communicating_Player(axl.Player):
         """
         #Regardless of intent for first few turns, do the base action.
         if len(self.history) == 0: return self.action_base
+        
+        #get overall reward
+        self.reward = self.find_reward(opponent)        
 
         # assess perceived intent message in opponent.sent_message
         self.intent_received_prev = self.intent_received
         self.intent_received = opponent.intent_sent
         self.assessment_prev = self.assessment
-        self.assessment = self.assess_received_intent(opponent.history[-1])
+        self.assessment = self.assess_received_intent(opponent.history[-1]) #this is the estimate of what the opponent is doing
         
         # store for testing later
+        self.list_reward.append(self.reward)
         self.list_intent_received.append(self.intent_received_prev)
         self.list_intent_sent.append(self.intent_sent_prev)
         self.list_intent_assessment.append(self.assessment_prev)
@@ -196,8 +213,9 @@ class Communicating_Player(axl.Player):
         # receive assessment and decide to stay with self.base_Action
         # OR change it to the other action.        
         self.old_decision = self.decision
-        self.decision = self.decide_based_on_new_intel(self.assessment,
-                                                       opponent.history[-1])        
+        self.decision = self.decide_based_on_new_intel(
+                                    opponent.history[-1]) # what the opponent actually did last turn
+        self.list_decision.append(self.old_decision)
         return self.decision
     
     

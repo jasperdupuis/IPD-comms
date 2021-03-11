@@ -15,7 +15,8 @@ from RL_strategies.dqn_learner_intergame_memory import DQN_Learner_Intergame_Mem
 # our stuff
 from communicating_match import Match_6505
 from communicating_player import Communicating_Player
-from trust_box import Trust_Q_Learner
+from trust_box import Trust_Q_Learner,Ned_Stark,Tywin_Lannister
+from conviction_box import Conviction_Q_Learner,Michael_Scott,Vizzini
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,18 +54,22 @@ if __name__ == '__main__':
     ql.set_params(learning_rate,discount_rate,action_selection_parameter,memory_length)
 
     trust = Trust_Q_Learner()
+    trust.init_params() #default values in func
+    conviction = Conviction_Q_Learner() 
+    conviction.init_params #default values in func
 
     MJ_Communicator.set_base_agent(ql)
     MJ_Communicator.set_trust_agent(trust)
+    MJ_Communicator.set_conviction_agent(conviction)
     
     MJ_Communicator.name = 'M&J Communicator Q-Learn'
     
     opponent = Communicating_Player()    
     
     if(True):#Play one matcha gainst a given opponent, chosen on next line.
-        base = axl.Alternator() #wins easily    
+        #base = axl.Alternator() #wins easily    
         #base = axl.TitForTat()     # wins by a hair
-        #base = axl.CautiousQLearner() # wins easily
+        base = axl.CautiousQLearner() # wins easily
         #base = axl.Cooperator()
         #base = axl.Defector()
         #base = axl.EvolvedANNNoise05() # Can do well early, but loses over 1000 turns.
@@ -72,7 +77,7 @@ if __name__ == '__main__':
         opponent.set_base_agent(base)
         opponent.name='M&J Communicator Alternator'
     
-        turns=10000
+        turns=1000
         repetitions = 1 # AKA num games
         game = Match_6505([MJ_Communicator,opponent],turns=turns)
         #game.set_seed(5) #same every time for RNGs
@@ -86,7 +91,7 @@ if __name__ == '__main__':
 
     if(False): # DEFAULT AXL TOURNAMENT
         #Check to see how this does in a tournament
-        TURNS_PER_MATCH = 1000
+        TURNS_PER_MATCH = 10000
         REPETITIONS = 5
         
         dqn = DQN_Learner_Intergame_Memory() #just a shell awating commands
