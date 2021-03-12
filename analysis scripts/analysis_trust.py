@@ -86,8 +86,8 @@ def plot_deception_summary(dec_df,deception_table_labels):
 
 deception_table, deception_table_labels = generate_deception_table(MJ_Communicator)
 dec_df = express_deception_table_as_percentages(deception_table,deception_table_labels)
-plt_result = plot_deception_summary(dec_df,deception_table_labels)
-plt_result.show()
+plt_comm_results = plot_deception_summary(dec_df,deception_table_labels)
+plt_comm_results.show()
 
 
 rewards = np.asarray(MJ_Communicator.trust.list_reward)
@@ -97,8 +97,9 @@ r = np.cumsum(rewards)
 plt.plot(rewards)
 plt.plot(r)
 
-firsthalf = scipy.stats.linregress(basis[5:5000],rewards[5:5000])
-secondhalf = scipy.stats.linregress(basis[5000:-5],rewards[5000:-5])
+n = len(r)//2 # rough midpoint
+firsthalf = scipy.stats.linregress(basis[5:n],rewards[5:n])
+secondhalf = scipy.stats.linregress(basis[n:-5],rewards[n:-5])
 firsthalf
 secondhalf
 
