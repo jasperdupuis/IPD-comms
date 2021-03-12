@@ -37,7 +37,7 @@ def plot_game_result(game,mani_jasper,opponent):
 #Testing area
 if __name__ == '__main__':
     learning_rate = 0.9
-    discount_rate = 0.1
+    discount_rate = 0.9
     action_selection_parameter = 0.1
     memory_length = 3
     ql = Q_Learner_6505()
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         dqn.init_net()
         #dqn=ql # for q learning testing
     
-        turns=250
+        turns=5000
         repetitions = 1 # AKA num games
         game = axl.Match([ql,opponent],turns=turns)
         #game.set_seed(5) #same every time for RNGs

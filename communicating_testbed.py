@@ -69,15 +69,15 @@ if __name__ == '__main__':
     if(True):#Play one matcha gainst a given opponent, chosen on next line.
         #base = axl.Alternator() #wins easily    
         #base = axl.TitForTat()     # wins by a hair
-        base = axl.CautiousQLearner() # wins easily
+        #base = axl.CautiousQLearner() # wins easily
         #base = axl.Cooperator()
         #base = axl.Defector()
-        #base = axl.EvolvedANNNoise05() # Can do well early, but loses over 1000 turns.
+        base = axl.EvolvedANNNoise05() # Can do well early, but loses over 1000 turns.
         #
         opponent.set_base_agent(base)
-        opponent.name='M&J Communicator Alternator'
+        opponent.name='M&J Communicator ANN05'
     
-        turns=1000
+        turns=100
         repetitions = 1 # AKA num games
         game = Match_6505([MJ_Communicator,opponent],turns=turns)
         #game.set_seed(5) #same every time for RNGs
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
     if(False): # DEFAULT AXL TOURNAMENT
         #Check to see how this does in a tournament
-        TURNS_PER_MATCH = 10000
+        TURNS_PER_MATCH = 1000
         REPETITIONS = 5
         
         dqn = DQN_Learner_Intergame_Memory() #just a shell awating commands
