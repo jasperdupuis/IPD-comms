@@ -24,6 +24,8 @@ TOURNAMENT_PAYOFFS_FILE = "tournament_payoffs.png"
 Score = Union[int,float]
 C, D = Action.C, Action.D
 
+labels = torch.tensor()
+
 
 def init_weights(m):
         if type(m) == torch.nn.Linear:
@@ -150,7 +152,7 @@ class MLP_Learner(Player):
         self.outputs[len(self.history)-1] = action_as_tensor
         
         
-        #Ladder logic  I guess
+        #Ladder logic  I guess... this is hand feature engineering though...
         if action_as_tensor[0]>2.5: 
             self.prev_action = D
             return D
@@ -163,12 +165,6 @@ class MLP_Learner(Player):
         else: 
             self.prev_action = C
             return C
-
-
-
-        self.prev_action=D
-        return D
-        
             
         
     def find_reward(self, opponent: Player) -> Dict[Action, Dict[Action, Score]]:
