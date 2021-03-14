@@ -78,7 +78,7 @@ class Tywin_Lannister(Trust_Box):
                 prev_nme_action):
         return D
 
-class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
+class Trust_Q_Learner(Trust_Box,Q_Learner_6505):
     """
     Re implement the Q Learner to use the variable intent vector
     (Had to change state and inputs)
@@ -90,23 +90,7 @@ class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
     discount_rate = 0.5 # cares about the future
     action_selection_parameter = 0.1 #bias towards exploration to visit new states
     memory_length = 1 # number of turns recalled in state
-        
-    def __init__(self) -> None:
-        """Initialises the player by picking a random strategy."""
-
-        super().__init__()
-
-        # Set this explicitly, since the constructor of super will not pick it up
-        # for any subclasses that do not override methods using random calls.
-        self.classifier["stochastic"] = True
-
-        self.prev_action = C # type: Action
-        self.original_prev_action = C# type: Action
-        self.score = 0
-        self.Qs = OrderedDict({"": OrderedDict(zip([C, D], [0, 0]))})
-        self.Vs = OrderedDict({"": 0})
-        self.prev_state = ""
-    
+     
     def set_params(self,
                    learning,
                    discount,
@@ -115,9 +99,7 @@ class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
         self.learning_rate = learning
         self.discount_rate = discount
         self.action_selection_parameter = select_param
-        self.memory_length = memory_length
-        
-        
+        self.memory_length = memory_length        
         
     def find_state(self, intent_received)-> str:
         """
@@ -137,34 +119,34 @@ class Trust_Q_Learner(Trust_Box,axl.RiskyQLearner):
                 intent_received,
                 intent_received_prev,
                 assessment_prev,
-                prev_nme_action):
+                opponent):
         """
         Runs a qlearn algorithm while the tournament is running.
         Reimplement the base class strategy to work with trust communication
         """
-        if len(self.history) == 0:
+        if len(self.history) < 2:
             self.prev_action = C
             self.original_prev_action = C
         
         state = self.find_state(intent_received)
         reward = self.find_reward(assessment_prev,
-                                  prev_nme_action)
+                                  opponent.history[-1])
         if state not in self.Qs:
             self.Qs[state] = OrderedDict(zip([C, D], [0, 0]))
             self.Vs[state] = 0
         self.perform_q_learning(self.prev_state, state, self.prev_action, reward)
-        if state not in self.Qs:
-            action = random_choice()
-        else:
-            action = self.select_action(state)
+        
+        action = self.select_action(state) #this also appends q values to list_predicted_rewards
         self.prev_state = state
         self.prev_action = action
-        self.append_reward(reward)
+        
+        self.list_reward.append(reward)
+        self.finished_opponent = opponent.name
         return action
     
 #class Trust_DQN(Trust_Box):
 """
-Wrap the normal DQN learner.
+Wrap the DQN learner.
 """
     
     
