@@ -22,14 +22,23 @@ This chart shows learning over a 14 player tournament, you can see evidence of t
 
 Here is a chart uploaded 20210514 showing Q Learner performance, averaged over 10000 games of 1000 turns each against each of the shown opponents.
 For clarity, ideal strategy against each of the shown agents is given (if known):
+
 AdaptorLong: ??
+
 CautiousQLearner: ?? (depends, it will always D or always C)
+
 Cooperator: always D (5 points)
+
 Defector: always D (1 point)
+
 ANN05: ??
+
 ANN: ??
+
 Random: ??
+
 Tit for Tat: C
+
 Worse and Worse: D (defects with a probability N/1000, where N is number of turns that have passed)
 
 
