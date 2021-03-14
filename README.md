@@ -20,6 +20,8 @@ This chart shows learning over a 14 player tournament, you can see evidence of t
 
 ![Expected reward over 14 player tournament](https://user-images.githubusercontent.com/13178493/109394730-da094900-78fe-11eb-9a7b-2d3532738b20.png)
 
+***
+
 Here is a chart uploaded 20210514 showing Q Learner performance, averaged over 10000 games of 1000 turns each against each of the shown opponents.
 For clarity, ideal strategy against each of the shown agents is given (if known):
 
