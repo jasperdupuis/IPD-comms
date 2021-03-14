@@ -15,6 +15,27 @@ from axelrod.action import Action
 Score = Union[int,float]
 C, D = Action.C, Action.D
       
+def write_base_opponent_decision(name1,name2,own_base_actions,opponent_actions,own_decisions):
+        """
+        Due to temporal difference need to make sure RECORDED own actions and
+        opponent action line up in indices. Single state's tuple but refer to different
+        true time steps.
+        opponent_action: the result of turn n-1
+        own_base_actions: the result for turn n
+        own_decisionsL the result for turn n
+        """
+        if len(own_base_actions) < 1: return
+        
+        opponent_actions = opponent_actions[1:]
+        own_base_actions = own_base_actions[:-1]
+        own_decisions = own_decisions[:-1]
+
+        with open(r'output\csvs\\_'+name1+'_' +name2+'_q versus r.csv', 'a',newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=",")
+            writer.writerow([name1 + "_v_" + name2 +"_base action"]+own_base_actions)
+            writer.writerow([name1 + "_v_" + name2 +"_decision"]+own_decisions)
+            writer.writerow([name1 + "_v_" + name2 +"_decision"]+opponent_actions)
+    
 def write_q_and_rewards(name1,name2,reward,predicted_reward = None):
         
         """

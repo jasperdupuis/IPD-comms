@@ -90,12 +90,14 @@ class Q_Learner_6505(Player):
         Copy and extend the base Player.clone() function so that networks
         save across clone operations.
         """
-        cls = self.__class__
-        new_player = cls(**self.init_kwargs)
-        new_player.match_attributes = copy(self.match_attributes)
         
         Q_save = deepcopy(self.Qs)
         V_save = deepcopy(self.Vs)
+        
+        
+        cls = self.__class__
+        new_player = cls(**self.init_kwargs)
+        new_player.match_attributes = copy(self.match_attributes)
         
         learning = self.learning_rate
         discount = self.discount_rate 
@@ -173,9 +175,11 @@ class Q_Learner_6505(Player):
         """
         Performs the qlearning algorithm
         """
-        self.Qs[prev_state][action] = (1.0 - self.learning_rate) * self.Qs[prev_state][
-            action
-        ] + self.learning_rate * (reward + self.discount_rate * self.Vs[state])
+        try:
+            self.Qs[prev_state][action] = (1.0 - self.learning_rate) * self.Qs[prev_state][action] \
+                + self.learning_rate * (reward + self.discount_rate * self.Vs[state])
+        except:
+            x=1
         self.Vs[prev_state] = max(self.Qs[prev_state].values())
 
     def find_reward(self, opponent: Player) -> Dict[Action, Dict[Action, Score]]:
