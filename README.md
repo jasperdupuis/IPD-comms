@@ -19,3 +19,20 @@ dqn_learner_intergame_memory: Same as dqn_learner, but overwrote axl.Player.rese
 This chart shows learning over a 14 player tournament, you can see evidence of trying to adapt to new players every game.
 
 ![Expected reward over 14 player tournament](https://user-images.githubusercontent.com/13178493/109394730-da094900-78fe-11eb-9a7b-2d3532738b20.png)
+
+Here is a chart uploaded 20210514 showing Q Learner performance, averaged over 10000 games of 1000 turns each against each of the shown opponents.
+For clarity, ideal strategy against each of the shown agents is given (if known):
+AdaptorLong: ??
+CautiousQLearner: ?? (depends, it will always D or always C)
+Cooperator: always D (5 points)
+Defector: always D (1 point)
+ANN05: ??
+ANN: ??
+Random: ??
+Tit for Tat: C
+Worse and Worse: D (defects with a probability N/1000, where N is number of turns that have passed)
+
+
+
+![QL_summary_reward](https://user-images.githubusercontent.com/13178493/111077842-6a37b880-84d1-11eb-93fe-2c2156bbba52.png)
+
