@@ -6,7 +6,6 @@ from RL_strategies.q_learner_n_memory import Q_Learner_6505
 from RL_strategies.dqn_learner import DQN_Learner
 from RL_strategies.dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
 
-
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np  
@@ -14,6 +13,17 @@ import numpy as np
 OUTPUT_DIR = "./output/"
 TOURNAMENT_RESULTS_FILE = "tournament_results.png"
 TOURNAMENT_PAYOFFS_FILE = "tournament_payoffs.png"
+
+SEED = 1000 # tournament is repeatable if seed is constant.
+
+Q_LEARN_MEMORY_LENGTH = 5
+Q_LEARN_EPSILON = 0.05 # random action 10% of the time
+Q_LEARN_DISCOUNT = 0.4 #high value on next future
+Q_LEARN_LEARNING = 0.8 #learn fast
+
+#Tournament settings.
+TURNS_PER_MATCH = 2000
+REPETITIONS = 1
 
 def plot_game_result(game,mani_jasper,opponent):
     """
@@ -36,70 +46,98 @@ def plot_game_result(game,mani_jasper,opponent):
 
 #Testing area
 if __name__ == '__main__':
-    learning_rate = 0.9
-    discount_rate = 0.9
-    action_selection_parameter = 0.1
-    memory_length = 3
+    learning_rate = Q_LEARN_LEARNING
+    discount_rate = Q_LEARN_DISCOUNT
+    action_selection_parameter = Q_LEARN_EPSILON
+    memory_length = Q_LEARN_MEMORY_LENGTH
     ql = Q_Learner_6505()
     ql.set_params(learning_rate,discount_rate,action_selection_parameter,memory_length)
+    
+    dqn = DQN_Learner_Intergame_Memory() #just a shell awating commands
+    dqn.set_params() #defaults in the function definition.
+    dqn.init_net()
     
     tft = axl.TitForTat()
     alt = axl.Alternator()
     rnd = axl.Random() 
-    
-    
-    if(True):#Play one matcha gainst a given opponent, chosen on next line.
+
+    if(True):#Play a single of match gainst a given opponent
         #opponent = axl.Alternator() #wins easily    
         #opponent = axl.TitForTat()     # wins by a hair
         #opponent = axl.CautiousQLearner() # wins easily
         #opponent = axl.Cooperator()
         #opponent = axl.Defector()
         opponent = axl.EvolvedANNNoise05() # Can do well early, but loses over 1000 turns.
-        dqn = DQN_Learner_Intergame_Memory() #just a shell awating commands
-        dqn.set_params() #defaults in the function definition.
-        dqn.init_net()
-        #dqn=ql # for q learning testing
-    
-        turns=5000
+        our_agent = ql
+        
+        turns=1000
         repetitions = 1 # AKA num games
-        game = axl.Match([ql,opponent],turns=turns)
-        #game.set_seed(5) #same every time for RNGs
-        #game.set_seed()
         for _ in range(repetitions):
+            game = axl.Match([our_agent,opponent],
+                             turns=turns,
+                             seed = SEED)
             game.play()
-        print('Done single game, generating result plot.')
-        plot_game_result(game,dqn,opponent)
-        nets = dqn.list_of_nets
-        dqn.write_q_and_rewards()
+        print('Done game, plotting result.') 
+        plot_game_result(game,our_agent,opponent)
+    
+    if(False):#Play a series of matches gainst a series of opponents, with new agent every game.
+        turns=1000
+        repetitions = 10000 # AKA num games for each opponent type
+        game = axl.Match([ql,opponent],turns=turns)
+
+        players = [axl.Random(),
+                           axl.TitForTat(),
+                           axl.EvolvedANN(),
+                           axl.EvolvedANNNoise05(),
+                           axl.WorseAndWorse(),
+                           axl.Cooperator(),
+                           axl.Defector(),
+                           axl.Grudger(),
+                           axl.AdaptorLong(),
+                           axl.CautiousQLearner()]
+        
+        for opponent in players:
+            for _ in range(repetitions): #reinstantiate our own learner every game, delete it for certainty.
+                ql = Q_Learner_6505()
+                ql.set_params(learning_rate,discount_rate,action_selection_parameter,memory_length)
+                our_agent = ql
+                game = axl.Match([our_agent,opponent],
+                                 turns=turns
+                                 )
+                game.play()
+                ql.reset()
+                opponent.reset()
+                del(our_agent)
+                del(ql)
+        print('Done game(s)')
 
     if(False): # DEFAULT AXL TOURNAMENT
         #Check to see how this does in a tournament
-        TURNS_PER_MATCH = 1000
-        REPETITIONS = 5
         
         dqn = DQN_Learner_Intergame_Memory() #just a shell awating commands
         dqn.set_params() #defaults in constructor.
         dqn.init_net()
         
-        players = [axl.WorseAndWorse(),
+        players = [axl.Random(),
+                   axl.TitForTat(),
+                   axl.EvolvedANN(),
+                   axl.EvolvedANNNoise05(),
+                   axl.WorseAndWorse(),
                    axl.Cooperator(),
                    axl.Defector(),
                    axl.Grudger(),
                    axl.AdaptorBrief(),
                    axl.AdaptorLong(),
-                   axl.Random(),
-                   axl.TitForTat(),
                    axl.Alternator(),
                    axl.CautiousQLearner(),
                    dqn,
-                   ql,
-                   axl.EvolvedANN(),
-                   axl.EvolvedANNNoise05()
+                   ql
                   ]
         tournament = Tournament_6505(
                 players=players,
                 turns=TURNS_PER_MATCH,
-                repetitions=REPETITIONS
+                repetitions=REPETITIONS,
+                seed= SEED
                 )
         
         # tournament = axl.Tournament(

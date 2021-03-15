@@ -50,11 +50,11 @@ class Tournament_6505(axl.Tournament):
             interactions = defaultdict(list)
             index_pair, match_params, repetitions, seed = chunk
             p1_index, p2_index = index_pair
-            if self.players[p1_index].name=="M&J DQN learner w/ memory":
+            if "learner" in self.players[p1_index].name:
                 player1 = self.players[p1_index]
             else:
                 player1 = self.players[p1_index].clone()
-            if self.players[p2_index].name=="M&J DQN learner w/ memory":
+            if "learner" in self.players[p2_index].name:
                 player2 = self.players[p2_index]
             else:
                 player2 = self.players[p2_index].clone()

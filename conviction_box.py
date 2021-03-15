@@ -1,7 +1,9 @@
+from RL_strategies.dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
+from RL_strategies.q_learner_n_memory import Q_Learner_6505
+
 import axelrod as axl
 from axelrod.player import Player
 from axelrod.action import Action, actions_to_str
-
 
 from collections import OrderedDict
 from typing import Dict, Union
@@ -9,25 +11,21 @@ from typing import Dict, Union
 C, D = Action.C, Action.D
 Score = Union[int,float]
 
+
 class Conviction_Box(axl.Player):
 
     def __init__(self):
         super().__init__()
-        self.list_decisions = []
 
     def strategy(self, opponent: Player,trust):
         #return action
         pass
-    
-    def append_decision(self,decision):
-        self.list_decisions.append(decision)
     
     def strategy(self,
                  action_base,
                  assessment,
                  prev_nme_action,
                  reward):
-        self.append_decision(action_base)
         return action_base
     
 class Michael_Scott(Conviction_Box):
@@ -39,13 +37,13 @@ class Michael_Scott(Conviction_Box):
     Always sticks with their gut, i.e. what was decided previously
     
     """
+    name = "Michael Scott"
     
     def strategy(self,
                  action_base,
                  assessment,
                  prev_nme_action,
                  reward):
-        self.append_decision(action_base)
         return action_base
     
     
@@ -69,52 +67,29 @@ class Vizzini(Conviction_Box):
     
     """
     
+    name = "Vizzini"
+    
     def strategy(self,
                  action_base,
                  assessment,
                  prev_nme_action,
                  reward):
-        self.append_decision(D)
         return D
     
     
-class Conviction_Q_Learner(Conviction_Box,axl.RiskyQLearner):
+class Conviction_Q_Learner(Conviction_Box,Q_Learner_6505):
     """
     Re implement the Q Learner to use the variable length intent vector
     
     """
     name = "Conviction Q learner"
     
-        #Default values, change with set_params
+        #Default values, change with set_params, not here
     learning_rate = 0.5 #learns fast
     discount_rate = 0.5 # cares about the future
     action_selection_parameter = 0.1 #bias towards exploration to visit new states
     memory_length = 1 # number of turns recalled in state
         
-    reward = 0
-    decision = C
-    decision_prev = C
-    
-    list_decisions = []
-
-    def __init__(self) -> None:
-        """Initialises the player by picking a random strategy."""
-
-        super().__init__()
-
-        # Set this explicitly, since the constructor of super will not pick it up
-        # for any subclasses that do not override methods using random calls.
-        self.classifier["stochastic"] = True
-
-        self.prev_action = C # type: Action
-        self.original_prev_action = C# type: Action
-        self.score = 0
-        self.Qs = OrderedDict({"": OrderedDict(zip([C, D], [0, 0]))})
-        self.Vs = OrderedDict({"": 0})
-        self.prev_state = ""
-        
-        self.list_decisions = []
-    
     def set_params(self,
                    learning,
                    discount,
@@ -137,41 +112,34 @@ class Conviction_Q_Learner(Conviction_Box,axl.RiskyQLearner):
         return state_str
     
     def find_reward(self,
-                    prev_nme_action):
-        return self.payoff_matrix[self.prev_action][prev_nme_action]
-        
+                    opponent):
+        return self.payoff_matrix[self.prev_action][opponent.history[-1]]
     
     def strategy(self,
                  action_base,
                  assessment,
                  reward,
-                 prev_nme_action):
+                 opponent):
         """
         Runs a qlearn algorithm while the tournament is running.
         Reimplement the base class strategy to work with trust communication
         """
-        if len(self.history) == 0:
+        if len(self.history) < 2:
             self.prev_action = C
             self.original_prev_action = C
         
+        reward = self.find_reward(opponent)
         state = self.find_state(action_base,assessment) #recursive
         
         if state not in self.Qs:
             self.Qs[state] = OrderedDict(zip([C, D], [0, 0]))
             self.Vs[state] = 0
         self.perform_q_learning(self.prev_state, state, self.prev_action, reward)
-        if state not in self.Qs:
-            action = random_choice()
-        else:
-            action = self.select_action(state)
+        
+        action = self.select_action(state)
         self.prev_state = state
         self.prev_action = action
-        self.append_decision(action)
-        return action
-    
-    
-        action = self.strategy(self.action_base,
-                                 self.assessment,
-                                 self.reward,
-                                 prev_nme_action)                
+        
+        self.list_reward.append(reward)
+        self.finished_opponent = opponent.name
         return action

@@ -44,5 +44,10 @@ comm_reward_self = []
 for own,opp in zip(MJ_conv_actions,opp_conv_actions):
     comm_reward_self.append(find_reward(own,opp))
 
+#cumsum
 plt.plot(np.cumsum(base_reward_self),label='Base');plt.plot(np.cumsum(comm_reward_self),label='Comm');plt.legend()
-plt.plot(np.cumsum(base_reward_self)-np.cumsum(comm_reward_self),label='Cumulative reward: \nBase - (Base+Trust+Conviction)');plt.title('ANN05 Base v QLearner Base');plt.legend()
+#delta
+plt.plot(np.cumsum(base_reward_self)-np.cumsum(comm_reward_self),label='Cumulative reward: \nBase - (Base+Trust+Conviction)');plt.title('Communication improves game result \n Q-learner agents for all three decisions');plt.legend()
+
+
+

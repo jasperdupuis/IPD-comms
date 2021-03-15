@@ -6,6 +6,8 @@ to allow DQN learner to remember results across games.
 Increases tournament average score substantially
 """
 
+import RL_strategies.static_functions as RL_func
+
 #Axelrod imports
 import axelrod as axl
 from axelrod.action import Action, actions_to_str
@@ -29,18 +31,6 @@ Score = Union[int,float]
 C, D = Action.C, Action.D
 
 
-def action_to_tensor(action):
-    if action == C: return torch.tensor([1.,0.])
-    if action == D: return torch.tensor([0.,1.])
-
-def int_to_action(integer): #not used right now
-    if integer==1: return C
-    if integer==0: return D
-
-def init_weights(m):
-        if type(m) == torch.nn.Linear:
-            torch.nn.init.normal_(m.weight, std=0.01)    
-
 class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
     """
     Implement a Deep-Q Learner. 
@@ -54,10 +44,6 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
     
     #DEBUG AND TESTING TOOLS
     list_of_nets = []
-    r_expect = ['Expected']
-    r_actual = ['Actual']
-    
-
     
     #Structures needed for learning + target generation
     optimizer = 'not yet set'
@@ -83,27 +69,33 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
     n_outputs = 2 #action as one hot
 
 
-    def write_q_and_rewards(self):
-        with open(r'output\csvs\rewards.csv', 'a',newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter=",")
-            writer.writerow(self.r_expect)
-            writer.writerow(self.r_actual)
-            
-        self.r_expect = ['Expected']
-        self.r_actual = ['Actual']
-        
     def reset(self):
         """
         write game reward results to file
         then reset
         """
-        if len(self.r_actual) < 10:
+        if len(self.list_reward) < 10:
             super().__init__(**self.init_kwargs)
             return
         
-        self.write_q_and_rewards()
+        RL_func.write_q_and_rewards(
+                            self.name,
+                            self.finished_opponent,
+                            self.list_reward,
+                            self.list_predicted_reward)
+        
+        t_save = deepcopy(self.target_network)
+        q_save = deepcopy(self.q_network)
+        n_mem = self.memory_length
+        n_out = self.n_outputs  
         
         super().__init__(**self.init_kwargs)
+
+        self.target_network.load_state_dict(t_save.state_dict())
+        self.q_network.load_state_dict(q_save.state_dict())
+        
+        self.list_reward = []
+        self.list_predicted_reward = []
 
 
     def clone(self):
@@ -153,7 +145,9 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         This means this model WILL NOT LEARN FROM GAME TO GAME!
         (NOT Hyperparameters)
         """
-        Player.__init__(self)     
+        Player.__init__(self)    
+        self.list_reward = []
+        self.list_predicted_reward = []
 
     def init_net(self):
         """        
@@ -184,12 +178,12 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         with torch.no_grad():
             Qp = self.q_network(state) #outputs n values
         Q,A = torch.max(Qp, axis=0) #value, index
-        self.r_expect.append(Q.item())
+        self.list_predicted_reward.append(Q.item())
         if torch.rand(1,).item() > self.epsilon:
-            return int_to_action(A)
+            return RL_func.int_to_action(A)
         else: #random action
             A = torch.randint(0,action_space_len,(1,))
-            return int_to_action(A)
+            return RL_func.int_to_action(A)
     
     def get_q_next(self, state):
         with torch.no_grad():
@@ -256,14 +250,14 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
             self.prev_action = C # Let's just start with cooperation. Hooray optimism!
             return C
 
-        opponent_last_action = action_to_tensor(opponent.history[-1])
-        own_last_action = action_to_tensor(self.history[-1])
+        opponent_last_action = RL_func.action_to_tensor(opponent.history[-1])
+        own_last_action = RL_func.action_to_tensor(self.history[-1])
         this_state = torch.hstack((opponent_last_action,own_last_action))
         
         self.old_state = self.state
         self.state = self.update_state_history(this_state) # this is the input to network.
         reward = self.find_reward(opponent)
-        self.r_actual.append(reward)
+        self.list_reward.append(reward)
         
         if len(self.history) < self.memory_length + 1:
             self.prev_action = C # Let's just start with cooperation. Hooray optimism!
@@ -273,4 +267,5 @@ class DQN_Learner_Intergame_Memory(axl.RiskyQLearner):
         
         action = self.get_action(self.state,self.n_outputs)
         self.prev_action = action
+        self.finished_opponent = opponent.name
         return action

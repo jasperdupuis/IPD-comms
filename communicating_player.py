@@ -11,6 +11,7 @@ from copy import deepcopy, copy
 # M&J module imports
 import trust_box
 import conviction_box
+import RL_strategies.static_functions as RL_func
 
 #Axelrod imports
 import axelrod as axl
@@ -57,7 +58,8 @@ class Communicating_Player(axl.Player):
     TRUTH_MEAN = torch.tensor([0.8])
     TRUTH_STD = torch.tensor([0.2])
     
-    def __init__(self,seed=101)->None:
+    def __init__(self,
+                 )->None:
         """
         Call the base and set a generator to a passed seed.
         
@@ -68,12 +70,9 @@ class Communicating_Player(axl.Player):
         """
         Player.__init__(self)
         self.classifier["stochastic"] = True #Make the communicator such by default, to pass to submodules.
-        self.generator = torch.Generator()
-        self.generator.manual_seed(seed)
-        self.trust = trust_box.Ned_Stark()
-        self.conviction = conviction_box.Michael_Scott()
         
-         #DEBUG / ANALYSIS TOOLS
+        #DEBUG / ANALYSIS TOOLS
+        self.finished_opponent = "none yet"
         self.list_base_action = []
         self.list_intent_sent = []
         self.list_intent_received = []
@@ -88,6 +87,15 @@ class Communicating_Player(axl.Player):
         self.payoff_matrix = {C: {C: R, D: S}, D: {C: T, D: P}}
         
     def reset(self):
+        super().__init__(**self.init_kwargs)
+        
+        RL_func.write_base_opponent_decision(
+            self.name,
+            self.finished_opponent,
+            self.list_base_action, #own base
+            self.list_intent_true, #nme action
+            self.list_decision) #own decision
+        
         self.base.reset()
         self.trust.reset()
         self.conviction.reset()
@@ -107,18 +115,36 @@ class Communicating_Player(axl.Player):
         self.base._random = self._random
         self.trust._random = self._random
         self.conviction._random = self._random
+        
+        self.generator = torch.Generator()
+        self.generator.manual_seed(int(seed))
+
+    def set_name(self):
+        self.name = self.base.name \
+            + ' ' + self.trust.name \
+            + ' ' + self.conviction.name
+        
 
     def update_history(self, play, coplay):
         """
         Strict copy-pasta of the base class method,
         but pass it to the three submodules too.
-        This passes the OVERALL actions, not the sub-actions.
+        This passes the OVERALL opponent actions, not the sub-actions.
         """
         self.history.append(play, coplay)
         self.base.history.append(play,coplay)
         self.trust.history.append(play,coplay)
         self.conviction.history.append(play,coplay)
 
+    def set_agents(self,
+                   base,
+                   trust,
+                   conviction):
+        self.set_base_agent(base)
+        self.set_trust_agent(trust)
+        self.set_conviction_agent(conviction)       
+        self.set_name()
+        
     def set_base_agent(self,agent):
         self.base=deepcopy(agent)
 
@@ -127,7 +153,7 @@ class Communicating_Player(axl.Player):
 
     def set_conviction_agent(self,agent):
         self.conviction=deepcopy(agent)
-
+        
     def generate_message(self):
         """
         self.action_base must be available before calling this.
@@ -191,6 +217,8 @@ class Communicating_Player(axl.Player):
         given message and best action determined from self.generate_base_intent_and_message,
         determine best action based on Trust and Conviction.
         """
+        #need to update name for posterity's sake
+        self.finished_opponent = opponent.name
         #Regardless of intent for first few turns, do the base action.
         if len(self.history) == 0: return self.action_base
         
@@ -201,7 +229,7 @@ class Communicating_Player(axl.Player):
         self.intent_received_prev = self.intent_received
         self.intent_received = opponent.intent_sent
         self.assessment_prev = self.assessment
-        self.assessment = self.assess_received_intent(opponent.history[-1]) #this is the estimate of what the opponent is doing
+        self.assessment = self.assess_received_intent(opponent)#this is the estimate of what the opponent is doing
         
         # store for testing later
         self.list_reward.append(self.reward)
@@ -213,9 +241,9 @@ class Communicating_Player(axl.Player):
         # receive assessment and decide to stay with self.base_Action
         # OR change it to the other action.        
         self.old_decision = self.decision
-        self.decision = self.decide_based_on_new_intel(
-                                    opponent.history[-1]) # what the opponent actually did last turn
+        self.decision = self.decide_based_on_new_intel(opponent) # what the opponent actually did last turn
         self.list_decision.append(self.old_decision)
+        
         return self.decision
     
     
