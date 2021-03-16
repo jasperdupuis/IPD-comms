@@ -17,6 +17,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def generate_deception_table(MJ_Communicator):
+    """
+    For the communicating player, the three lists of interest are coherent
+    i.e. they commands are all in player.strategy() as:
+        list_intent_received.append(prev_intent)
+        list_intent_assessment.append(prev_assessment)
+        list_intent_true.append(opponent.history[-1])
+    """
     intent_rx = MJ_Communicator.list_intent_received        #what was received on turn n-1 (one hot vector)
     intent_tx = MJ_Communicator.list_intent_sent            #what was sent on turn n-1 (one hot vector)
     intent_assess = MJ_Communicator.list_intent_assessment  #what was assessed value of intent on turn n-1 (C or D)
