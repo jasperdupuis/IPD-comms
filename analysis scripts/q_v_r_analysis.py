@@ -12,7 +12,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Base Q Learner'
+directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Trust Q Learner'
 
 result_csv = directory + r'\QL_N_999.csv'
 

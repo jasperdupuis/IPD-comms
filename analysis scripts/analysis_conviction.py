@@ -35,10 +35,15 @@ from axelrod.action import Action
 C, D = Action.C, Action.D
 
 directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Communicating_Player'
-result_csv = directory + r'\conviction_v_base.csv'
+result_csv = directory + r'\summary tables\QL_N_996.csv'
 
 NUM_GAMES = 10000
 NUM_TURNS = 996 #useable
+
+b_mean_str = 'base reward (mean)'
+b_std_str = 'base reward (std)' 
+c_mean_str = 'decision reward (mean)' 
+c_std_str = 'decision reward (std)'
 
 def generate_file_list(p_directory):
     all_files = os.listdir(p_directory)
@@ -112,6 +117,18 @@ def plot_single_dimension(parent_fig,parent_ax,linestyle,p_df,p_query):
         parent_ax.plot(curr_data,label = opponent[:-1],linestyle = linestyle)    
     return parent_fig,parent_ax
 
+
+def plot_single_dimension_with_errbars(parent_fig,parent_ax,linestyle,p_df,p_query):
+    #all list entries with passed p_query string in it
+    strings =  list(filter(lambda x:p_query in x,p_df.columns)) 
+    for r in strings:
+        opponent = ''
+        for s in r.split(' ')[:-2]:
+            opponent = opponent + s + ' '
+        curr_data = p_df[r].values
+        parent_ax.plot(curr_data,label = opponent[:-1],linestyle = linestyle)    
+    return parent_fig,parent_ax
+
 def compare_results(p_df,parent_fig,parent_ax,opponent):
     """
     Compute and plot base - (Base+trust+conviction)    
@@ -122,29 +139,17 @@ def compare_results(p_df,parent_fig,parent_ax,opponent):
     parent_ax.plot(delta_sum,label = opponent[:-1])    
     return parent_fig,parent_ax
     
-
 """
 file_list = generate_file_list(directory)
 df = generate_summary_results_base_v_decision(file_list)
 df.to_csv(os.path.join(directory,"QL_N_996"))
 """
 
-"""
-b_mean_str = 'base reward (mean)'
-b_std_str = 'base reward (std)' 
-c_mean_str = 'decision reward (mean)' 
-c_std_str = 'decision reward (std)'
-
-fig, ax = plt.subplots(figsize=(10,7))
-fig,ax = plot_single_dimension(fig,ax,'solid',df,c_mean_str)
-fig,ax = plot_single_dimension(fig,ax,'dashed',df,b_mean_str)
-fig.legend(loc=1)
-fig.suptitle('True reward mean')
-fig.show()
-"""
+df = pd.read_csv(result_csv)
 
 players = []
 for f in file_list:
+    if not('.csv' in f): continue
     players.append(f.split('_')[3])
 
 fig, ax = plt.subplots(figsize=(10,7))    

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-compare expected reward of these two agents.
+compare expected reward of two agents. (typically base and conviction)
 
 @author: Jasper
 """
@@ -39,17 +39,38 @@ def plot_single_dimension(parent_fig,parent_ax,linestyle,p_df,p_query,label_add=
         for s in r.split(' ')[:-2]:
             opponent = opponent + s + ' '
         curr_data = p_df[r].values
-        parent_ax.plot(curr_data,label = opponent[:-1]+ label_add,linestyle = linestyle)    
+        parent_ax.plot(curr_data,label = label_add + opponent[:-1] ,linestyle = linestyle)    
     return parent_fig,parent_ax
 
-df_q = pd.read_csv(csv_QL) 
-df_c = pd.read_csv(csv_conviction)
-
-p = players[2]
-fig, ax = plt.subplots(figsize=(10,7))
-fig,ax = plot_single_dimension(fig,ax,'solid',df_q,p + ' ' +q_mean_str, ' Base QL')
-fig,ax = plot_single_dimension(fig,ax,'dashed',df_c,p + ' ' +q_mean_str, ' Conviction QL')
-fig.legend(loc='lower right')
-fig.suptitle('Predicted reward mean')
-fig.show()
-
+def plot_q_and_r_comparisons(csv_QL,csv_conviction,players)
+    """
+    Plots the average results of the 10000 game run against each other,
+    of the base agent and conviction agent.
+    """
+    df_q = pd.read_csv(csv_QL) 
+    df_c = pd.read_csv(csv_conviction)
+    
+    for p in players:
+        fig, ax = plt.subplots(figsize=(10,7))
+        fig,ax = plot_single_dimension(fig,ax,'solid',df_q,p + ' ' +q_mean_str, 'Base QL vs ')
+        fig,ax = plot_single_dimension(fig,ax,'dashed',df_c,p + ' ' +q_mean_str, 'Conviction QL vs ')
+        fig.legend(loc=(0.4,0.2))
+        #fig.legend()
+        fig.suptitle('Triple-Q Agent vs \n' + p + '\n' + q_mean_str + ', N = 10000' ,fontsize=14)
+        fig.savefig('pdf\Triple-Q Agent vs ' + p + ' ' + q_mean_str +'.pdf',
+                    dpi=300)
+        fig.savefig('png\Triple-Q Agent vs ' + p + ' ' + q_mean_str +'.png',
+                    dpi=300)
+        
+        fig, ax = plt.subplots(figsize=(10,7))
+        fig,ax = plot_single_dimension(fig,ax,'solid',df_q,p + ' ' +r_mean_str, 'Base QL vs ')
+        fig,ax = plot_single_dimension(fig,ax,'dashed',df_c,p + ' ' +r_mean_str, 'Conviction QL vs ')
+        fig.legend(loc=(0.4,0.2))
+        #fig.legend()
+        fig.suptitle('Triple-Q Agent vs \n' + p + '\n' + r_mean_str + ', N = 10000',fontsize=14)
+        fig.savefig('pdf\Triple-Q Agent vs ' + p + ' ' + r_mean_str +'.pdf',
+                    dpi=300)
+        fig.savefig('png\Triple-Q Agent vs ' + p + ' ' + r_mean_str +'.png',
+                    dpi=300)
+    
+plot_q_and_r_comparisons(csv_QL,csv_conviction,players)
