@@ -20,16 +20,6 @@ import matplotlib.pyplot as plt
 PLAYER = MJ_Communicator
 OPPONENT = opponent
 
-def find_reward(own_action,
-                opp_action):
-        """
-        I'm lazy
-        """
-        if own_action == C and opp_action == C: return 3
-        if own_action == C and opp_action == D: return 0
-        if own_action == D and opp_action == C: return 5
-        if own_action == D and opp_action == D: return 1
-
 
 MJ_base_actions = PLAYER.list_base_action[1:]
 MJ_conv_actions = PLAYER.list_decision

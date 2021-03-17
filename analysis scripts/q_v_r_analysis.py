@@ -4,14 +4,17 @@
 Methods to analyze and visualize results for Q Learner and DQN in common,
 in particular expected rewards v true rewards.
 
+Works for conviction, trust, or base Q Learners.
+
 """
 import numpy as np
 import pandas as pd
 import os
+import matplotlib.pyplot as plt
 
-directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\serial games'
+directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Trust Q Learner'
 
-result_csv = r'C:/Users/Jasper/Desktop/Machine Learning/6505/output/csvs/serial games/QL_N_999.csv'
+result_csv = directory + r'\QL_N_999.csv'
 
 def generate_file_list(p_directory):
     all_files = os.listdir(p_directory)
@@ -23,7 +26,7 @@ def generate_file_list(p_directory):
         list_files.append(os.path.join(p_directory,file))
     return list_files
 
-def generate_summary_results(list_full_paths):
+def generate_summary_results_q_v_r(list_full_paths):
     df = pd.DataFrame()    
     base_name = list_full_paths[0].split('_')[1]
     for file in list_full_paths:
@@ -39,35 +42,24 @@ def generate_summary_results(list_full_paths):
         df[opponent_name + ' prediction (std)'] = q_std
     save_name = base_name + '_N_'+str(len(r_mean)) + '.csv'
     df.to_csv(os.path.join(directory,save_name))
-
-    ax.bar(label_coords-1.5*width_bar,ratios*dec_df[labels[0]],width=0.2,label=labels[0])
-    ax.bar(label_coords-0.5*width_bar,ratios*dec_df[labels[1]],width=0.2,label=labels[1])
-    ax.bar(label_coords+0.5*width_bar,ratios*dec_df[labels[2]],width=0.2,label=labels[2])
-    ax.bar(label_coords+1.5*width_bar,ratios*dec_df[labels[3]],width=0.2,label=labels[3])
-    ax.set_xticks(label_coords)
-    ax.set_xlabel('Proportion of message bin scaled to total messages')
-    ax.set_xlabel('One hot vector message index')
-    ax.legend()
-    ax.set_title('Summary message assessment results conditioned on total messages, N = ' + str(N))
-    return fig
+    return
 
 def plot_single_dimension(parent_fig,parent_ax,linestyle,p_df,p_query):
-    strings =  list(filter(lambda x:p_query in x,p_df.columns))
+    #all list entries with passed p_query string in it
+    strings =  list(filter(lambda x:p_query in x,p_df.columns)) 
     for r in strings:
         opponent = ''
         for s in r.split(' ')[:-2]:
             opponent = opponent + s + ' '
         curr_data = p_df[r].values
-        ax.plot(curr_data,label = opponent[:-1],linestyle = linestyle)    
-    return fig,ax
+        parent_ax.plot(curr_data,label = opponent[:-1],linestyle = linestyle)    
+    return parent_fig,parent_ax
 
-
-               
-
-#need to know a priori that reward comes first, prediction comes second, and repeats every two rows
-#plt.plot(r_mean,label='r mean');plt.plot(r_std,label='r std');plt.legend()
-#plt.plot(q_mean,label='q mean');plt.plot(q_std,label='q std');plt.legend()
-#plt.plot(q_mean,label='Predicted mean');plt.plot(r_mean,label='Reward mean');plt.legend()
+#dont need this every time.
+"""
+files = generate_file_list(directory)
+generate_summary_results_q_v_r(files)
+"""
 
 df = pd.read_csv(result_csv)
 
@@ -89,8 +81,6 @@ fig,ax = plot_single_dimension(fig,ax,'solid',df,r_mean_str)
 fig.legend(loc=1)
 fig.suptitle('True reward mean')
 fig.show()
-                  
-
                   
 
 #if __name__ == '__main__':

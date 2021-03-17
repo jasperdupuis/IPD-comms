@@ -4,6 +4,15 @@ Created on Sat Mar  6 17:38:22 2021
 
 analyze communicating player trust results
 
+There's  a bit more here than the other scripts.
+
+One set of functions takes a class object and makes a communication plot,
+typically of trust results given Alternator base opponent.
+
+The other set is for plotting accuracy in judging intent over time.
+
+#Note for trust there is no assymetric rewards, just 5 for accurate and 0 for not.
+
 @author: Jasper
 """
 
@@ -16,7 +25,33 @@ import scipy
 import pandas as pd
 import matplotlib.pyplot as plt
 
+csv_trust= r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Trust Q Learner\QL_N_998.csv'
+
+players = [
+     'AdaptorLong Paranoid Michael Scott',
+     'Cautious QLearner Paranoid Michael Scott',
+     'Cooperator Paranoid Michael Scott',
+     'Defector Paranoid Michael Scott',
+     'Evolved ANN 5 Noise 05 Paranoid Michael Scott',
+     'Evolved ANN Paranoid Michael Scott',
+     'Grudger Paranoid Michael Scott',
+     'Random Paranoid Michael Scott',
+     'Tit For Tat Paranoid Michael Scott',
+     'Worse and Worse Paranoid Michael Scott']
+
+r_mean_str = 'reward (mean)'
+r_std_str = 'reward (std)' 
+q_mean_str = 'prediction (mean)' 
+q_std_str = 'prediction (std)'
+
 def generate_deception_table(MJ_Communicator):
+    """
+    For the communicating player, the three lists of interest are coherent
+    i.e. they commands are all in player.strategy() as:
+        list_intent_received.append(prev_intent)
+        list_intent_assessment.append(prev_assessment)
+        list_intent_true.append(opponent.history[-1])
+    """
     intent_rx = MJ_Communicator.list_intent_received        #what was received on turn n-1 (one hot vector)
     intent_tx = MJ_Communicator.list_intent_sent            #what was sent on turn n-1 (one hot vector)
     intent_assess = MJ_Communicator.list_intent_assessment  #what was assessed value of intent on turn n-1 (C or D)
@@ -84,11 +119,39 @@ def plot_deception_summary(dec_df,deception_table_labels):
     return fig
 
 
+def plot_single_dimension(parent_fig,parent_ax,linestyle,p_df,p_query,label_add=''):
+    #all list entries with passed p_query string in it
+    strings =  list(filter(lambda x:p_query in x,p_df.columns)) 
+    for r in strings:
+        opponent = ''
+        for s in r.split(' ')[:-2]:
+            opponent = opponent + s + ' '
+        curr_data = p_df[r].values
+        parent_ax.plot(curr_data,label = label_add + opponent[:-1] ,linestyle = linestyle)    
+    return parent_fig,parent_ax
+
+df_t = pd.read_csv(csv_trust) 
+
+for p in players:
+    fig, ax = plt.subplots(figsize=(10,7))
+    fig,ax = plot_single_dimension(fig,ax,'solid',df_q,p + ' ' +r_mean_str, 'Trust QL Reward vs ')
+    fig,ax = plot_single_dimension(fig,ax,'dashed',df_c,p + ' ' +q_mean_str, 'Trust QL Predicted vs ')
+    fig.legend(loc=(0.4,0.2))
+    #fig.legend()
+    fig.suptitle('Trust Agent in Triple-Q Agent vs \n' + p + '\n' + q_mean_str + ', N = 10000' ,fontsize=14)
+    fig.savefig('pdf\Trust Agent in Triple-Q Agent vs ' + p + ' ' + q_mean_str +'.pdf',
+                dpi=300)
+    fig.savefig('png\Trust Agent in Triple-Q Agent vs ' + p + ' ' + q_mean_str +'.png',
+                dpi=300)
+    
+
+
+#Look at trust messages received v judged. Use alternator. Needs a base object.
+"""
 deception_table, deception_table_labels = generate_deception_table(MJ_Communicator)
 dec_df = express_deception_table_as_percentages(deception_table,deception_table_labels)
 plt_comm_results = plot_deception_summary(dec_df,deception_table_labels)
 plt_comm_results.show()
-
 
 rewards = np.asarray(MJ_Communicator.trust.list_reward)
 basis = np.arange(len(rewards))
@@ -96,13 +159,4 @@ r = np.cumsum(rewards)
 
 plt.plot(rewards)
 plt.plot(r)
-
-n = len(r)//2 # rough midpoint
-firsthalf = scipy.stats.linregress(basis[5:n],rewards[5:n])
-secondhalf = scipy.stats.linregress(basis[n:-5],rewards[n:-5])
-firsthalf
-secondhalf
-
-
-plt.plot(r)
-
+"""
