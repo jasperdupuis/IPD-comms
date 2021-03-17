@@ -18,6 +18,8 @@ from communicating_player import Communicating_Player
 from trust_box import Trust_Q_Learner,Ned_Stark,Tywin_Lannister
 from conviction_box import Conviction_Q_Learner,Michael_Scott,Vizzini
 
+from benchmark_score import Benchmark_Score
+
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np  
@@ -90,7 +92,7 @@ if __name__ == '__main__':
     #base = axl.Cooperator()
     #base = axl.Defector()
     #base = axl.EvolvedANNNoise05()
-    base = axl.EvolvedANN()
+    base = axl.EvolvedANNNoise05()
     
     opponent = Communicating_Player()
     opponent.set_agents(base,
@@ -98,21 +100,27 @@ if __name__ == '__main__':
                         Michael_Scott()
                         )    
     
-    if(False):#Play one match against a given opponent, chosen on next line.
+    if(True):#Play one match against a given opponent, chosen on next line.
         turns=10000
         repetitions = 1 # AKA num games
         game = Match_6505([MJ_Communicator,opponent],
                           turns=turns,
                           seed=SEED)
+        
+        benchmark = Benchmark_Score() #Benchmark Score = player score if both players always cooperate
+        benchmark.set_benchmark_score(turns)
+        
         for _ in range(repetitions):
             game.play()
+            benchmark.add_player_score(sum(np.asarray(game.scores())[int(turns/10):,0]))
         print('Done single game, generating result plot.')
+        print('Player reached  %.2f of benchmark' % (benchmark.get_benchmark_percentage()))
         own_score, opp_score = plot_game_result(game,MJ_Communicator,opponent)
         
     #
     # give both our_agent and opponent the Q learner for trust and conviction.
     # Custom tournament using our own reset() and del() methods 
-    if(True):#Play a series of matches gainst a series of opponents, with new agent every game.
+    if(False):#Play a series of matches gainst a series of opponents, with new agent every game.
         turns=1000
         repetitions = 10000 # AKA num games for each opponent type
         

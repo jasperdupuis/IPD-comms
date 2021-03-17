@@ -5,6 +5,7 @@ from tournament_6505 import Tournament_6505
 from RL_strategies.q_learner_n_memory import Q_Learner_6505
 from RL_strategies.dqn_learner import DQN_Learner
 from RL_strategies.dqn_learner_intergame_memory import DQN_Learner_Intergame_Memory
+from benchmark_score import Benchmark_Score
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -60,7 +61,8 @@ if __name__ == '__main__':
     tft = axl.TitForTat()
     alt = axl.Alternator()
     rnd = axl.Random() 
-
+    
+    
     if(True):#Play a single of match gainst a given opponent
         #opponent = axl.Alternator() #wins easily    
         #opponent = axl.TitForTat()     # wins by a hair
@@ -70,14 +72,19 @@ if __name__ == '__main__':
         opponent = axl.EvolvedANNNoise05() # Can do well early, but loses over 1000 turns.
         our_agent = ql
         
-        turns=1000
+        benchmark = Benchmark_Score()
+        
+        turns=10000
         repetitions = 1 # AKA num games
+        benchmark.set_benchmark_score(turns) #set benchmark score given number of turns
         for _ in range(repetitions):
             game = axl.Match([our_agent,opponent],
                              turns=turns,
                              seed = SEED)
             game.play()
-        print('Done game, plotting result.') 
+            benchmark.add_player_score(sum(np.asarray(game.scores())[int(turns/10):,0]))
+        print('Done game, plotting result.')
+        print('Player reached  %.2f of benchmark' % (benchmark.get_benchmark_percentage()))
         plot_game_result(game,our_agent,opponent)
     
     if(False):#Play a series of matches gainst a series of opponents, with new agent every game.
