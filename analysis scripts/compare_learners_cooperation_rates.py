@@ -12,11 +12,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Communicating_Player'
+directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Communicating Player'
 csv_target_dir = directory +  r'\summary tables'
 
-NUM_GAMES = 10000
-NUM_TURNS = 996 #useable
+NUM_GAMES = 2000
+NUM_TURNS = 5000 #useable
 
 PLAYERS = [
      'AdaptorLong Paranoid Michael Scott',
@@ -62,7 +62,9 @@ def generate_single_opp_results(file):
         while counter < NUM_GAMES-1:
             base_actions = r.readline().split(',')[2:-2]
             decisions = r.readline().split(',')[1:-2]
+            opp_actions = r.readline() #not used, don't split.
             bc,bd,cc,cd,N = process_single_game_results(base_actions,decisions)
+            if N == 0: return result
             result[counter,0] = N
             result[counter,1] = bc
             result[counter,2] = bc/N
@@ -97,8 +99,8 @@ def generate_results_csv(p_directory,target_directory):
     file_list = generate_file_list(p_directory)
     dfs = []
     for f in file_list:
-        opponent = f.split('_')[3]
-        opp_id = [opponent] * 10000
+        opponent = f.split('_')[2]
+        opp_id = [opponent] * NUM_GAMES
         df = generate_base_v_decision_coop_defec_table(f)
         df['Opponent'] = opp_id
         dfs.append(df)
@@ -129,6 +131,8 @@ def create_summary_dictionary(
         result[p] = sub_res
     return result
 
+generate_results_csv(directory,csv_target_dir)
+
 result = create_summary_dictionary()
 labels = ['Base Cooperations', 'Conviction Cooperations' , 'Base Defections' , 'Conviction Defections']
 xpos = np.arange(len(labels))
@@ -139,8 +143,11 @@ for key,value in result.items():
     ax.bar(xpos,means,yerr=std,tick_label=labels)
     ax.set_ylabel('Action rate')
     fig.suptitle(key,fontsize=14)
+    fig.savefig('pdf\Triple-Q Agent vs ' + key + ' action rates.pdf',
+                dpi=300)
+    fig.savefig('png\Triple-Q Agent vs ' + key + ' action rates.png',
+                dpi=300)
     fig.show()    
-    
     
 
 

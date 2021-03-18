@@ -17,7 +17,8 @@ NOTE:
     2)opponent action
     3)decision
     
-In some (many) files, 2) and 3) are BOTH labelled "decision"
+In some files (especially <20210316 versions of competition),
+ 2) and 3) are BOTH labelled "decision"
 
 @author: Jasper
 """
@@ -34,11 +35,11 @@ from csv import reader
 from axelrod.action import Action
 C, D = Action.C, Action.D
 
-directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Communicating_Player'
+directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Communicating Player'
 result_csv = directory + r'\summary tables\QL_N_996.csv'
 
-NUM_GAMES = 10000
-NUM_TURNS = 996 #useable
+NUM_GAMES = 2000
+NUM_TURNS = 996 #useable, N - 4 i think for all cases.
 
 b_mean_str = 'base reward (mean)'
 b_std_str = 'base reward (std)' 
@@ -50,7 +51,7 @@ def generate_file_list(p_directory):
     
     list_files = []
     for file in all_files:
-        if '.py' in file:
+        if not('.csv' in file):
             continue
         list_files.append(os.path.join(p_directory,file))
     return list_files
@@ -94,9 +95,9 @@ def generate_single_opp_results(file):
 
 def generate_summary_results_base_v_decision(list_full_paths):
     df = pd.DataFrame()    
-    base_name = list_full_paths[0].split('_')[2]
+    base_name = list_full_paths[0].split('_')[1]
     for file in list_full_paths:
-        opponent_name = file.split('_')[3]
+        opponent_name = file.split('_')[2]
         r_b,r_c = generate_single_opp_results(file)   
         b_mean,b_std = np.mean(r_b,axis=0),np.std(r_b,axis=0)
         c_mean,c_std = np.mean(r_c,axis=0),np.std(r_c,axis=0)
@@ -142,7 +143,7 @@ def compare_results(p_df,parent_fig,parent_ax,opponent):
 """
 file_list = generate_file_list(directory)
 df = generate_summary_results_base_v_decision(file_list)
-df.to_csv(os.path.join(directory,"QL_N_996"))
+df.to_csv(result_csv)
 """
 
 df = pd.read_csv(result_csv)
@@ -150,13 +151,13 @@ df = pd.read_csv(result_csv)
 players = []
 for f in file_list:
     if not('.csv' in f): continue
-    players.append(f.split('_')[3])
+    players.append(f.split('_')[2])
 
 fig, ax = plt.subplots(figsize=(10,7))    
 for p in players:
     fig,ax = compare_results(df,fig,ax,p)
 fig.legend(loc=1)
-fig.suptitle('Reward delta: \n base - (base+trust+conviction)')
+fig.suptitle('Mean reward delta for N = 2000 games: \n base - (base+trust+conviction)')
 fig.show()
 
 

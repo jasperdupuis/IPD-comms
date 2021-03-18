@@ -10,9 +10,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
-csv_QL = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Base Q Learner\QL_N_999.csv'
-csv_conviction = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Conviction Q Learner\QL_N_998.csv'
+csv_QL = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Base Q Learner\QL_N_1999.csv'
+csv_conviction = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Conviction Q Learner\QL_N_1998.csv'
 
 players = [
      'AdaptorLong Paranoid Michael Scott',
@@ -42,7 +41,7 @@ def plot_single_dimension(parent_fig,parent_ax,linestyle,p_df,p_query,label_add=
         parent_ax.plot(curr_data,label = label_add + opponent[:-1] ,linestyle = linestyle)    
     return parent_fig,parent_ax
 
-def plot_q_and_r_comparisons(csv_QL,csv_conviction,players)
+def plot_q_and_r_comparisons(csv_QL,csv_conviction,players):
     """
     Plots the average results of the 10000 game run against each other,
     of the base agent and conviction agent.
@@ -56,7 +55,7 @@ def plot_q_and_r_comparisons(csv_QL,csv_conviction,players)
         fig,ax = plot_single_dimension(fig,ax,'dashed',df_c,p + ' ' +q_mean_str, 'Conviction QL vs ')
         fig.legend(loc=(0.4,0.2))
         #fig.legend()
-        fig.suptitle('Triple-Q Agent vs \n' + p + '\n' + q_mean_str + ', N = 10000' ,fontsize=14)
+        fig.suptitle('Triple-Q Agent vs \n' + p + '\n' + q_mean_str + ', N = 2000' ,fontsize=14)
         fig.savefig('pdf\Triple-Q Agent vs ' + p + ' ' + q_mean_str +'.pdf',
                     dpi=300)
         fig.savefig('png\Triple-Q Agent vs ' + p + ' ' + q_mean_str +'.png',
@@ -67,7 +66,7 @@ def plot_q_and_r_comparisons(csv_QL,csv_conviction,players)
         fig,ax = plot_single_dimension(fig,ax,'dashed',df_c,p + ' ' +r_mean_str, 'Conviction QL vs ')
         fig.legend(loc=(0.4,0.2))
         #fig.legend()
-        fig.suptitle('Triple-Q Agent vs \n' + p + '\n' + r_mean_str + ', N = 10000',fontsize=14)
+        fig.suptitle('Triple-Q Agent vs \n' + p + '\n' + r_mean_str + ', N = 2000',fontsize=14)
         fig.savefig('pdf\Triple-Q Agent vs ' + p + ' ' + r_mean_str +'.pdf',
                     dpi=300)
         fig.savefig('png\Triple-Q Agent vs ' + p + ' ' + r_mean_str +'.png',

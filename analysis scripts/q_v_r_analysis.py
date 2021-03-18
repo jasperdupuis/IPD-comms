@@ -6,22 +6,28 @@ in particular expected rewards v true rewards.
 
 Works for conviction, trust, or base Q Learners.
 
+Does not do anything for the Communicating Player results.
+
 """
 import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
 
-directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Trust Q Learner'
+directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Base Q Learner'
+result_csv = directory + r'\QL_N_1999.csv'
 
-result_csv = directory + r'\QL_N_999.csv'
+r_mean_str = 'reward (mean)'
+r_std_str = 'reward (std)' 
+q_mean_str = 'prediction (mean)' 
+q_std_str = 'prediction (std)'
 
 def generate_file_list(p_directory):
     all_files = os.listdir(p_directory)
     
     list_files = []
     for file in all_files:
-        if '.py' in file:
+        if not('.csv' in file):
             continue
         list_files.append(os.path.join(p_directory,file))
     return list_files
@@ -40,7 +46,8 @@ def generate_summary_results_q_v_r(list_full_paths):
         df[opponent_name + ' reward (std)'] = r_std
         df[opponent_name + ' prediction (mean)'] = q_mean
         df[opponent_name + ' prediction (std)'] = q_std
-    save_name = base_name + '_N_'+str(len(r_mean)) + '.csv'
+    #save_name = base_name + '_N_'+str(len(r_mean)) + '.csv'
+    save_name = 'QL_N_'+str(len(r_mean)) + '.csv'
     df.to_csv(os.path.join(directory,save_name))
     return
 
@@ -56,23 +63,19 @@ def plot_single_dimension(parent_fig,parent_ax,linestyle,p_df,p_query):
     return parent_fig,parent_ax
 
 #dont need this every time.
-"""
+
 files = generate_file_list(directory)
 generate_summary_results_q_v_r(files)
-"""
 
+"""
 df = pd.read_csv(result_csv)
 
-r_mean_str = 'reward (mean)'
-r_std_str = 'reward (std)' 
-q_mean_str = 'prediction (mean)' 
-q_std_str = 'prediction (std)'
 
-# fig, ax = plt.subplots(figsize=(10,7))
-# fig,ax = plot_single_dimension(fig,ax,'solid',df,r_mean_str)
-# fig,ax = plot_single_dimension(fig,ax,'dotted',df,q_mean_str)
-# fig.legend()
-# fig.show()
+fig, ax = plt.subplots(figsize=(10,7))
+fig,ax = plot_single_dimension(fig,ax,'solid',df,r_mean_str)
+fig,ax = plot_single_dimension(fig,ax,'dotted',df,q_mean_str)
+fig.legend()
+fig.show()
                   
 
 
@@ -81,7 +84,7 @@ fig,ax = plot_single_dimension(fig,ax,'solid',df,r_mean_str)
 fig.legend(loc=1)
 fig.suptitle('True reward mean')
 fig.show()
-                  
+"""            
 
 #if __name__ == '__main__':
 
