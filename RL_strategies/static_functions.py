@@ -17,6 +17,8 @@ C, D = Action.C, Action.D
       
 def write_base_opponent_decision(name1,name2,own_base_actions,opponent_actions,own_decisions):
         """
+        Communicating Player only.
+        
         Due to temporal difference need to make sure RECORDED own actions and
         opponent action line up in indices. Single state's tuple but refer to different
         true time steps.
@@ -34,7 +36,19 @@ def write_base_opponent_decision(name1,name2,own_base_actions,opponent_actions,o
             writer = csv.writer(csvfile, delimiter=",")
             writer.writerow([name1 + "_v_" + name2 +"_base action"]+own_base_actions)
             writer.writerow([name1 + "_v_" + name2 +"_decision"]+own_decisions)
-            writer.writerow([name1 + "_v_" + name2 +"_decision"]+opponent_actions)
+            writer.writerow([name1 + "_v_" + name2 +"_opponent action"]+opponent_actions)
+    
+def write_actions(name1,name2,own_base_actions,opponent_actions):
+        if len(own_base_actions) < 1: return
+        
+        opponent_actions = opponent_actions[1:]
+        own_base_actions = own_base_actions[:-1]
+        
+        with open(r'output\csvs\\_'+name1+'_' +name2+'_actions log.csv', 'a',newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=",")
+            writer.writerow([name1 + "_v_" + name2 +"own action"]+own_base_actions)
+            writer.writerow([name1 + "_v_" + name2 +"_opponent action"]+opponent_actions)
+    
     
 def write_q_and_rewards(name1,name2,reward,predicted_reward = None):
         

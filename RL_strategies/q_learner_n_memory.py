@@ -27,7 +27,7 @@ class Q_Learner_6505(Player):
     This copies and extends the axl.RiskyQLearner class.
     """
     
-    name = "M&J's Q learner"    
+    name = "M&J Q Learner"    
     classifier = {
         "memory_depth": float("inf"),  # Long memory
         "stochastic": True,
@@ -42,13 +42,12 @@ class Q_Learner_6505(Player):
     discount_rate = 0.9 # cares about the future
     action_selection_parameter = 0.1 #bias towards exploration to visit new states
     memory_length = 3 # number of turns recalled in state
-
+    epsilon_decay = 0.98
 
     def __init__(self) -> None:
         """Initialises the player by picking a random strategy."""
 
         super().__init__()
-
         # Set this explicitly, since the constructor of super will not pick it up
         # for any subclasses that do not override methods using random calls.
         self.classifier["stochastic"] = True
@@ -62,6 +61,8 @@ class Q_Learner_6505(Player):
         
         self.list_reward = []
         self.list_predicted_reward = []
+        self.list_opp_actions = []
+        self.list_own_actions = []
         self.finished_opponent = "none yet"
 
     def reset(self):
@@ -77,6 +78,13 @@ class Q_Learner_6505(Player):
                             self.finished_opponent,
                             self.list_reward,
                             self.list_predicted_reward)
+        
+        # RL_func.write_actions(
+        #                     self.name,
+        #                     self.finished_opponent,
+        #                     self.list_own_actions,
+        #                     self.list_opp_actions
+        #                     )
         
         super().__init__(**self.init_kwargs)
         
@@ -114,10 +122,12 @@ class Q_Learner_6505(Player):
                    learning=0.9,
                    discount=0.5,
                    select_param=0.05,
+                   epsilon_decay = 0.98,
                    memory_length=3):
         self.learning_rate = learning
         self.discount_rate = discount
         self.action_selection_parameter = select_param
+        self.epsilon_decay - epsilon_decay
         self.memory_length = memory_length
 
     def receive_match_attributes(self):
@@ -143,6 +153,11 @@ class Q_Learner_6505(Player):
         action = self.select_action(state)
         self.prev_state = state
         self.prev_action = action
+
+        if len(opponent.history) > 1: 
+            self.list_opp_actions.append(actions_to_str([opponent.history[-1]]))
+            self.list_own_actions.append(actions_to_str([self.prev_action]))
+        
         self.list_reward.append(reward)
         self.finished_opponent = opponent.name
         return action
@@ -158,6 +173,7 @@ class Q_Learner_6505(Player):
             action = max(self.Qs[state], key=lambda x: self.Qs[state][x])
             self.list_predicted_reward.append(self.Qs[state][action])
             return action
+        self.action_selection_parameter = self.action_selection_parameter*self.epsilon_decay
         self.list_predicted_reward.append(-1) #this means a random action was taken and we need to record that
         return self._random.random_choice()
     
@@ -176,7 +192,8 @@ class Q_Learner_6505(Player):
         Performs the qlearning algorithm
         """
         try:
-            self.Qs[prev_state][action] = (1.0 - self.learning_rate) * self.Qs[prev_state][action] \
+            self.Qs[prev_state][action] = (1.0 - self.learning_rate) \
+                * self.Qs[prev_state][action] \
                 + self.learning_rate * (reward + self.discount_rate * self.Vs[state])
         except:
             x=1
