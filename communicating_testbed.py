@@ -18,8 +18,6 @@ from communicating_player import Communicating_Player
 from trust_box import Trust_Q_Learner,Ned_Stark,Tywin_Lannister
 from conviction_box import Conviction_Q_Learner,Michael_Scott,Vizzini
 
-from benchmark_score import Benchmark_Score
-
 import numpy as np
 import matplotlib.pyplot as plt
 import numpy as np  
@@ -28,8 +26,9 @@ import torch
 SEED = 1000 # tournament is repeatable if seed is constant.
 
 Q_LEARN_MEMORY_LENGTH = 5
-Q_LEARN_EPSILON = 0.05 # random action 10% of the time
-Q_LEARN_DISCOUNT = 0.4 #high value on next future
+Q_LEARN_EPSILON = 0.4 # random action 50% of the time, decays at rate 0.98.
+Q_LEARN_EPSILON_DECAY = 0.98
+Q_LEARN_DISCOUNT = 0.9 # high value on next future
 Q_LEARN_LEARNING = 0.8 #learn fast
 
 #Leave these as 1, breaks trust and not necessary to show a delta hopefully.
@@ -38,7 +37,7 @@ CONVICTION_MEMORY = 1
 
 #Tournament settings.
 TURNS_PER_MATCH = 2000
-REPETITIONS = 1
+REPETITIONS = 2000
 OUTPUT_DIR = "./output/"
 TOURNAMENT_RESULTS_FILE = "tournament_results.png"
 TOURNAMENT_PAYOFFS_FILE = "tournament_payoffs.png"
@@ -66,18 +65,21 @@ if __name__ == '__main__':
         Q_LEARN_LEARNING,
         Q_LEARN_DISCOUNT,
         Q_LEARN_EPSILON,
+        Q_LEARN_EPSILON_DECAY,
         Q_LEARN_MEMORY_LENGTH)
     trust = Trust_Q_Learner()
     trust.set_params(        
         Q_LEARN_LEARNING,
         Q_LEARN_DISCOUNT,
         Q_LEARN_EPSILON,
+        Q_LEARN_EPSILON_DECAY,
         TRUST_MEMORY) #default values in func
     conviction = Conviction_Q_Learner() 
     conviction.set_params(
         Q_LEARN_LEARNING,
         Q_LEARN_DISCOUNT,
         Q_LEARN_EPSILON,
+        Q_LEARN_EPSILON_DECAY,
         CONVICTION_MEMORY) #default values in func
 
     MJ_Communicator = Communicating_Player()
@@ -92,7 +94,7 @@ if __name__ == '__main__':
     #base = axl.Cooperator()
     #base = axl.Defector()
     #base = axl.EvolvedANNNoise05()
-    base = axl.EvolvedANNNoise05()
+    base = axl.EvolvedANN()
     
     opponent = Communicating_Player()
     opponent.set_agents(base,
@@ -100,45 +102,39 @@ if __name__ == '__main__':
                         Michael_Scott()
                         )    
     
-    if(True):#Play one match against a given opponent, chosen on next line.
-        turns=10000
+    if(False):#Play one match against a given opponent, chosen on next line.
+        turns=TURNS_PER_MATCH
         repetitions = 1 # AKA num games
         game = Match_6505([MJ_Communicator,opponent],
                           turns=turns,
                           seed=SEED)
-        
-        benchmark = Benchmark_Score() #Benchmark Score = player score if both players always cooperate
-        benchmark.set_benchmark_score(turns)
-        
         for _ in range(repetitions):
             game.play()
-            benchmark.add_player_score(sum(np.asarray(game.scores())[int(turns/10):,0]))
         print('Done single game, generating result plot.')
-        print('Player reached  %.2f of benchmark' % (benchmark.get_benchmark_percentage()))
         own_score, opp_score = plot_game_result(game,MJ_Communicator,opponent)
         
     #
     # give both our_agent and opponent the Q learner for trust and conviction.
     # Custom tournament using our own reset() and del() methods 
-    if(False):#Play a series of matches gainst a series of opponents, with new agent every game.
-        turns=1000
-        repetitions = 10000 # AKA num games for each opponent type
+    if(True):#Play a series of matches gainst a series of opponents, with new agent every game.
+        turns=TURNS_PER_MATCH
+        repetitions = REPETITIONS # AKA num games for each opponent type
         
-        base_players = [axl.Random(),
+        base_players = [#axl.Random(),
                     axl.TitForTat(),
-                    axl.EvolvedANN(),
-                    axl.EvolvedANNNoise05(),
+                    #axl.EvolvedANN(),
+                    #axl.EvolvedANNNoise05(),
                     axl.WorseAndWorse(),
-                    axl.Cooperator(),
-                    axl.Defector(),
-                    axl.Grudger(),
-                    axl.AdaptorLong(),
-                    axl.CautiousQLearner()]
+                    #axl.Cooperator(),
+                    #axl.Defector(),
+                    #axl.AdaptorLong(),
+                    #axl.CautiousQLearner()
+                    ]
         
         for player in base_players:
             for _ in range(repetitions): #reinstantiate agents learner every game, delete it for certainty.
                 o_trust = Tywin_Lannister()
-                o_conviction = Michael_Scott()
+                o_conviction = Michael_Scott() #just stick with base action.
                 """
                 o_trust = Trust_Q_Learner()
                 o_conviction = Conviction_Q_Learner()
@@ -154,7 +150,7 @@ if __name__ == '__main__':
                     CONVICTION_MEMORY) #default values in func   
                 """
                 opponent = Communicating_Player()
-                opponent.set_agents(base,
+                opponent.set_agents(player,
                         o_trust,
                         o_conviction
                         )    
@@ -164,19 +160,23 @@ if __name__ == '__main__':
                     Q_LEARN_LEARNING,
                     Q_LEARN_DISCOUNT,
                     Q_LEARN_EPSILON,
+                    Q_LEARN_EPSILON_DECAY,
                     Q_LEARN_MEMORY_LENGTH)
+                #trust = Ned_Stark()
                 trust = Trust_Q_Learner()
                 trust.set_params(        
                     Q_LEARN_LEARNING,
                     Q_LEARN_DISCOUNT,
                     Q_LEARN_EPSILON,
+                    Q_LEARN_EPSILON_DECAY,
                     TRUST_MEMORY) #default values in func
                 conviction = Conviction_Q_Learner() 
                 conviction.set_params(
                     Q_LEARN_LEARNING,
                     Q_LEARN_DISCOUNT,
                     Q_LEARN_EPSILON,
-                    CONVICTION_MEMORY) #default values in func    
+                    Q_LEARN_EPSILON_DECAY,
+                    CONVICTION_MEMORY) #default values in func 
                 our_agent = Communicating_Player()
                 our_agent.set_agents(ql,
                                trust,
