@@ -9,14 +9,13 @@ import numpy as np
 import csv
 from typing import Union
 import torch
-import pickle
 
 from axelrod.action import Action
 
 Score = Union[int,float]
 C, D = Action.C, Action.D
       
-def write_base_opponent_decision(name1,name2,own_base_actions,opponent_actions,own_decisions,assessment):
+def write_base_opponent_decision(name1,name2,own_base_actions,opponent_actions,own_decisions):
         """
         Communicating Player only.
         
@@ -32,14 +31,12 @@ def write_base_opponent_decision(name1,name2,own_base_actions,opponent_actions,o
         opponent_actions = opponent_actions[1:]
         own_base_actions = own_base_actions[:-1]
         own_decisions = own_decisions[:-1]
-        assessment = assessment[1:]
 
         with open(r'output\csvs\\_'+name1+'_' +name2+'_q versus r.csv', 'a',newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=",")
             writer.writerow([name1 + "_v_" + name2 +"_base action"]+own_base_actions)
             writer.writerow([name1 + "_v_" + name2 +"_decision"]+own_decisions)
             writer.writerow([name1 + "_v_" + name2 +"_opponent action"]+opponent_actions)
-            #writer.writerow([name1 + "_v_" + name2 +"_own assessment"]+assessment)
     
 def write_actions(name1,name2,own_base_actions,opponent_actions):
         if len(own_base_actions) < 1: return
@@ -72,23 +69,6 @@ def write_q_and_rewards(name1,name2,reward,predicted_reward = None):
             writer = csv.writer(csvfile, delimiter=",")
             writer.writerow([name1 + "_v_" + name2 +"_reward"]+reward)
             writer.writerow([name1 + "_v_" + name2 +"_reward_predicted"]+predicted_reward)
-            
-def store_trust_qs_and_vs(Qs,Vs):
-    qs_and_vs = []
-    qs_and_vs.append(Qs)
-    qs_and_vs.append(Vs)
-    with open(r"trust_learner_values", "wb") as input_file:
-        pickle.dump(qs_and_vs, input_file)
-        input_file.close()
-
-def load_trust_qs_and_vs():
-    qs_and_vs = []
-    qs_and_vs.append(Qs)
-    qs_and_vs.append(Vs)
-    with open(r"trust_learner_values", "rb") as input_file:
-        qs_and_vs = pickle.load(input_file)
-        return qs_and_vs[0],qs_and_vs[1]
-
             
             
 def action_to_tensor(action):

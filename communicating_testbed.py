@@ -17,7 +17,6 @@ from communicating_match import Match_6505
 from communicating_player import Communicating_Player
 from trust_box import Trust_Q_Learner,Ned_Stark,Tywin_Lannister
 from conviction_box import Conviction_Q_Learner,Michael_Scott,Vizzini
-from trained_trust import Trained_Trust_QLearner
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -32,16 +31,13 @@ Q_LEARN_EPSILON_DECAY = 0.98
 Q_LEARN_DISCOUNT = 0.9 # high value on next future
 Q_LEARN_LEARNING = 0.8 #learn fast
 
-
-TRUST_Q_LEARN_DISCOUNT = 0.9
-
 #Leave these as 1, breaks trust and not necessary to show a delta hopefully.
 TRUST_MEMORY = 1
 CONVICTION_MEMORY = 1
 
 #Tournament settings.
-TURNS_PER_MATCH = 3000
-REPETITIONS = 200
+TURNS_PER_MATCH = 2000
+REPETITIONS = 2000
 OUTPUT_DIR = "./output/"
 TOURNAMENT_RESULTS_FILE = "tournament_results.png"
 TOURNAMENT_PAYOFFS_FILE = "tournament_payoffs.png"
@@ -74,14 +70,16 @@ if __name__ == '__main__':
     trust = Trust_Q_Learner()
     trust.set_params(        
         Q_LEARN_LEARNING,
-        0,
+        Q_LEARN_DISCOUNT,
         Q_LEARN_EPSILON,
+        Q_LEARN_EPSILON_DECAY,
         TRUST_MEMORY) #default values in func
     conviction = Conviction_Q_Learner() 
     conviction.set_params(
         Q_LEARN_LEARNING,
         Q_LEARN_DISCOUNT,
         Q_LEARN_EPSILON,
+        Q_LEARN_EPSILON_DECAY,
         CONVICTION_MEMORY) #default values in func
 
     MJ_Communicator = Communicating_Player()
@@ -124,13 +122,13 @@ if __name__ == '__main__':
         
         base_players = [#axl.Random(),
                     axl.TitForTat(),
-                    axl.EvolvedANN(),
-                    axl.EvolvedANNNoise05(),
+                    #axl.EvolvedANN(),
+                    #axl.EvolvedANNNoise05(),
                     axl.WorseAndWorse(),
-                    axl.Cooperator(),
-                    axl.Defector(),
-                    axl.AdaptorLong(),
-                    axl.CautiousQLearner()
+                    #axl.Cooperator(),
+                    #axl.Defector(),
+                    #axl.AdaptorLong(),
+                    #axl.CautiousQLearner()
                     ]
         
         for player in base_players:
@@ -165,12 +163,19 @@ if __name__ == '__main__':
                     Q_LEARN_EPSILON_DECAY,
                     Q_LEARN_MEMORY_LENGTH)
                 #trust = Ned_Stark()
-                trust = Trained_Trust_QLearner()
+                trust = Trust_Q_Learner()
+                trust.set_params(        
+                    Q_LEARN_LEARNING,
+                    Q_LEARN_DISCOUNT,
+                    Q_LEARN_EPSILON,
+                    Q_LEARN_EPSILON_DECAY,
+                    TRUST_MEMORY) #default values in func
                 conviction = Conviction_Q_Learner() 
                 conviction.set_params(
                     Q_LEARN_LEARNING,
                     Q_LEARN_DISCOUNT,
                     Q_LEARN_EPSILON,
+                    Q_LEARN_EPSILON_DECAY,
                     CONVICTION_MEMORY) #default values in func 
                 our_agent = Communicating_Player()
                 our_agent.set_agents(ql,
@@ -248,54 +253,3 @@ if __name__ == '__main__':
         plot = results_plot.payoff()
         plot.show()
         plot.savefig(OUTPUT_DIR+TOURNAMENT_PAYOFFS_FILE)
-    
-    #Save Trust Learner
-    if(False):
-        turns=5000
-        repetitions = 1 # AKA num games
-        player = axl.WorseAndWorse();
-        o_trust = Tywin_Lannister()
-        o_conviction = Michael_Scott()
-        opponent = Communicating_Player()
-        opponent.set_agents(player,
-                        o_trust,
-                        o_conviction
-                        )
-        game = Match_6505([MJ_Communicator,opponent],
-                          turns=turns,
-                          seed=SEED)
-        for _ in range(repetitions):
-            game.play()
-        print('Done single game, generating result plot.')
-        own_score, opp_score = plot_game_result(game,MJ_Communicator,opponent)
-    
-    #with tranied trust qlearner
-    if(False):
-        turns = 5000
-        #set up "our" communicating agent.
-        ql = Q_Learner_6505()
-        ql.set_params(
-            Q_LEARN_LEARNING,
-            Q_LEARN_DISCOUNT,
-            Q_LEARN_EPSILON,
-            Q_LEARN_EPSILON_DECAY,
-            Q_LEARN_MEMORY_LENGTH)
-        trust = Trained_Trust_QLearner()
-        conviction = Conviction_Q_Learner() 
-        conviction.set_params(
-            Q_LEARN_LEARNING,
-            Q_LEARN_DISCOUNT,
-            Q_LEARN_EPSILON,
-            CONVICTION_MEMORY) #default values in func
-
-        MJ_Communicator = Communicating_Player()
-        MJ_Communicator.set_agents(ql,
-                                   trust,
-                                   conviction
-                                   )
-        game = Match_6505([MJ_Communicator,opponent],
-                          turns=turns,
-                          seed=SEED)
-        game.play()
-        print('Done single game, generating result plot.')
-        own_score, opp_score = plot_game_result(game,MJ_Communicator,opponent)
