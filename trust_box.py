@@ -9,6 +9,7 @@ from collections import OrderedDict
 from typing import Dict, Union
 Score = Union[int, float]
 C, D = Action.C, Action.D
+import RL_strategies.static_functions as RL_func
 
 
 import RL_strategies.dqn_learner_intergame_memory
@@ -99,7 +100,8 @@ class Trust_Q_Learner(Trust_Box,Q_Learner_6505):
         self.learning_rate = learning
         self.discount_rate = discount
         self.action_selection_parameter = select_param
-        self.memory_length = memory_length        
+        self.memory_length = memory_length     
+        
         
     def find_state(self, intent_received)-> str:
         """
@@ -142,6 +144,7 @@ class Trust_Q_Learner(Trust_Box,Q_Learner_6505):
         
         self.list_reward.append(reward)
         self.finished_opponent = opponent.name
+        RL_func.store_trust_qs_and_vs(self.Qs,self.Vs)
         return action
     
 #class Trust_DQN(Trust_Box):

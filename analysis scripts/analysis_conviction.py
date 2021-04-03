@@ -29,17 +29,19 @@ import torch
 import scipy
 import pandas as pd
 import matplotlib.pyplot as plt
+import imageio
 
 from csv import reader
 
 from axelrod.action import Action
 C, D = Action.C, Action.D
 
-directory = r'C:\Users\Jasper\Desktop\Machine Learning\6505\output\csvs\Communicating Player'
-result_csv = directory + r'\summary tables\QL_N_996.csv'
+filename = r'_M&J Q Learner Trust Q learner Conviction Q learner_Worse and Worse Paranoid Michael Scott_q versus r.csv'
+directory = r'/'
+result_csv = directory + r'/a.csv'
 
-NUM_GAMES = 2000
-NUM_TURNS = 996 #useable, N - 4 i think for all cases.
+NUM_GAMES = 500
+NUM_TURNS = 1995 #useable, N - 4 i think for all cases.
 
 b_mean_str = 'base reward (mean)'
 b_std_str = 'base reward (std)' 
@@ -84,14 +86,17 @@ def generate_single_opp_results(file):
     counter = 0
     with open(file,'r') as r:
         while counter < NUM_GAMES-1:
-            base_actions = r.readline().split(',')[2:-2]
-            opp_actions = r.readline().split(',')[1:-2]
-            decisions = r.readline().split(',')[1:-2]
+            base_actions = r.readline().split(',')[3:-2]
+            opp_actions = r.readline().split(',')[2:-2]
+            decisions = r.readline().split(',')[2:-2]
+            assessment = r.readline().split(',')[2:-2]
             b, c = process_single_game_results(base_actions,decisions,opp_actions)
             r_base[counter,:] = b
             r_conv[counter,:] = c
             counter+=1
         return r_base,r_conv
+    
+
 
 def generate_summary_results_base_v_decision(list_full_paths):
     df = pd.DataFrame()    
@@ -106,6 +111,89 @@ def generate_summary_results_base_v_decision(list_full_paths):
         df[opponent_name + ' decision reward (mean)'] = c_mean
         df[opponent_name + ' decision reward (std)'] = c_std
     return df
+
+
+def conviction_and_base_agent_performance(file):
+    is_coviction_better_than_base = np.zeros((NUM_GAMES,NUM_TURNS))
+    counter = 0
+    with open(file,'r') as r:
+        while counter < NUM_GAMES-1:
+            base_actions = r.readline().split(',')[3:-2]
+            opp_actions = r.readline().split(',')[2:-2]
+            decisions = r.readline().split(',')[2:-2]
+            b, c = process_single_game_results(base_actions,decisions,opp_actions)
+            for i in range(len(b)):  
+                if b[i] > c[i]: 
+                    is_coviction_better_than_base[counter,i]  = 1
+                elif  b[i] == c[i]:
+                    is_coviction_better_than_base[counter,i]  = 0
+                elif  b[i] < c[i]:
+                    is_coviction_better_than_base[counter,i]  = -1
+            counter+=1
+        return is_coviction_better_than_base
+
+def compare_assessment_opponentaction(file):
+    is_opponent_and_assessment_same = np.zeros((NUM_GAMES,NUM_TURNS))
+    counter = 0
+    with open(file,'r') as r:
+        while counter < NUM_GAMES-1:
+            base_actions = r.readline().split(',')[3:-2]
+            opp_actions = r.readline().split(',')[2:-2]
+            decisions = r.readline().split(',')[2:-2]
+            assessment = r.readline().split(',')[2:-2]
+            for i in range(len(assessment)):
+                if assessment[i] == opp_actions[i]:
+                    is_opponent_and_assessment_same[counter,i] = 1
+                else:
+                    is_opponent_and_assessment_same[counter,i] = 0  
+            counter+=1
+        return is_opponent_and_assessment_same
+
+def mani_plot(list_full_paths):
+    df = pd.DataFrame()    
+    base_name = list_full_paths[0].split('_')[1]
+    for file in list_full_paths:
+        opponent_name = file.split('_')[2]
+        is_opponent_and_assessment_same = compare_assessment_opponentaction(file)   
+        filenames = []
+        for is_coviction_better_than_base_per_game in is_coviction_better_than_base_all_games:
+            plt.plot(range(len(is_coviction_better_than_base_per_game)),is_coviction_better_than_base_per_game)
+            filename = f'haa{len(filenames)}.png'
+            filenames.append(filename)
+            plt.savefig(filename)
+            plt.title(f'game = {len(filenames)}')
+            plt.close()
+        with imageio.get_writer('opponent.gif', mode='I') as writer:
+            for filename in filenames:
+                image = imageio.imread(filename)
+                writer.append_data(image)
+        # Remove files
+        for filename in set(filenames):
+            os.remove(filename)  
+        return df
+
+def assessment_plot(list_full_paths):
+    df = pd.DataFrame()    
+    base_name = list_full_paths[0].split('_')[1]
+    for file in list_full_paths:
+        opponent_name = file.split('_')[2]
+        is_opponent_and_assessment_same_all_games = compare_assessment_opponentaction(file)   
+        filenames = []
+        for is_opponent_and_assessment_same_per_game in is_opponent_and_assessment_same_all_games[:250]:
+            plt.scatter(range(len(is_opponent_and_assessment_same_per_game)),is_opponent_and_assessment_same_per_game)
+            filename = f'haa{len(filenames)}.png'
+            filenames.append(filename)
+            plt.savefig(filename)
+            plt.text(2,3, "game number = "+ str(len(filenames)))
+            plt.close()
+        with imageio.get_writer('opponent.gif', mode='I') as writer:
+            for filename in filenames:
+                image = imageio.imread(filename)
+                writer.append_data(image)
+        # Remove files
+        for filename in set(filenames):
+            os.remove(filename)  
+        return df
 
 def plot_single_dimension(parent_fig,parent_ax,linestyle,p_df,p_query):
     #all list entries with passed p_query string in it
@@ -139,26 +227,35 @@ def compare_results(p_df,parent_fig,parent_ax,opponent):
     delta_sum = np.cumsum(b_data-c_data)
     parent_ax.plot(delta_sum,label = opponent[:-1])    
     return parent_fig,parent_ax
-    
-"""
-file_list = generate_file_list(directory)
-df = generate_summary_results_base_v_decision(file_list)
-df.to_csv(result_csv)
-"""
 
-df = pd.read_csv(result_csv)
 
-players = []
-for f in file_list:
-    if not('.csv' in f): continue
-    players.append(f.split('_')[2])
 
-fig, ax = plt.subplots(figsize=(10,7))    
-for p in players:
-    fig,ax = compare_results(df,fig,ax,p)
-fig.legend(loc=1)
-fig.suptitle('Mean reward delta for N = 2000 games: \n base - (base+trust+conviction)')
-fig.show()
+#file_list = generate_file_list(directory)
+file_list = [filename]
+# df = generate_summary_results_base_v_decision(file_list)
+# df.to_csv(result_csv)
+
+# df2 = mani_plot(file_list)
+# df2.to_csv(result_csv)
+
+df3 = assessment_plot(file_list)
+df3.to_csv(result_csv)
+
+
+
+# df = pd.read_csv(result_csv)
+
+# players = []
+# for f in file_list:
+#     if not('.csv' in f): continue
+#     players.append(f.split('_')[2])
+
+# fig, ax = plt.subplots(figsize=(10,7))    
+# for p in players:
+#     fig,ax = compare_results(df,fig,ax,p)
+# fig.legend(loc=1)
+# fig.suptitle('Mean reward delta for N = 2000 games: \n base - (base+trust+conviction)')
+# fig.show()
 
 
 

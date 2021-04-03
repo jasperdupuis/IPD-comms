@@ -94,7 +94,8 @@ class Communicating_Player(axl.Player):
             self.finished_opponent,
             self.list_base_action, #own base
             self.list_intent_true, #nme action
-            self.list_decision) #own decision
+            self.list_decision,
+            self.list_intent_assessment) #own decision
         
         self.base.reset()
         self.trust.reset()
